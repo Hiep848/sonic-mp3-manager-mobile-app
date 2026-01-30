@@ -3,22 +3,34 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/utils/dio_provider.dart';
 
-// Dòng này cực quan trọng để sinh code provider
 part 'upload_remote_datasource.g.dart';
 
-abstract class UploadRemoteDataSource {
-  // Bước 1: Khởi tạo, trả về uploadId
-  Future<String> initUpload(String fileName, int fileSize);
+// Provider definition
+@riverpod
+UploadRemoteDataSource uploadRemoteDataSource(UploadRemoteDataSourceRef ref) {
+  return UploadRemoteDataSourceImpl(ref.watch(dioProvider));
+}
 
-  // Bước 2: Gửi từng mảnh
-  Future<void> uploadChunk({
-    required String uploadId,
-    required int chunkIndex,
-    required List<int> data, // Binary data
+class InitUploadResponse {
+  final String jobId;
+  final String presignedUrl;
+
+  InitUploadResponse({required this.jobId, required this.presignedUrl});
+}
+
+abstract class UploadRemoteDataSource {
+  Future<InitUploadResponse> initUpload(String fileName, String contentType);
+
+  Future<void> uploadFileToS3({
+    required String url,
+    required Stream<List<int>> fileStream,
+    required int length,
+    required String contentType,
+    CancelToken? cancelToken,
+    required Function(int, int)? onSendProgress,
   });
 
-  // Bước 3: Hoàn tất, trả về URL file
-  Future<String> completeUpload(String uploadId);
+  Future<void> confirmUpload(String jobId);
 }
 
 class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
@@ -27,51 +39,49 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
   UploadRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<String> initUpload(String fileName, int fileSize) async {
+  Future<InitUploadResponse> initUpload(
+      String fileName, String contentType) async {
     final response = await _dio.post(
-      '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadInit}',
+      ApiEndpoints.uploadInit,
       data: {
-        'fileName': fileName,
-        'fileSize': fileSize,
+        'filename': fileName,
+        'content_type': contentType,
       },
     );
-    // Giả sử server trả về: { "uploadId": "xyz-123" }
-    return response.data['uploadId'];
+    return InitUploadResponse(
+      jobId: response.data['job_id'],
+      presignedUrl: response.data['presigned_url'],
+    );
   }
 
   @override
-  Future<void> uploadChunk({
-    required String uploadId,
-    required int chunkIndex,
-    required List<int> data,
+  Future<void> uploadFileToS3({
+    required String url,
+    required Stream<List<int>> fileStream,
+    required int length,
+    required String contentType,
+    CancelToken? cancelToken,
+    required Function(int, int)? onSendProgress,
   }) async {
-    // Gửi binary thường dùng FormData
-    final formData = FormData.fromMap({
-      'uploadId': uploadId,
-      'chunkIndex': chunkIndex,
-      // MultipartFile.fromBytes là cách gửi binary chuẩn trong Dio
-      'chunkData': MultipartFile.fromBytes(data, filename: 'chunk_$chunkIndex'),
-    });
+    // USE A FRESH DIO for S3 upload to avoid default BaseURL/Headers interfering
+    final s3Dio = Dio();
 
-    await _dio.post(
-      '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadChunk}',
-      data: formData,
+    await s3Dio.put(
+      url,
+      data: fileStream,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      options: Options(
+        headers: {
+          'Content-Length': length,
+          'Content-Type': contentType,
+        },
+      ),
     );
   }
 
   @override
-  Future<String> completeUpload(String uploadId) async {
-    final response = await _dio.post(
-      '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadComplete}',
-      data: {'uploadId': uploadId},
-    );
-    // Giả sử server trả về: { "fileUrl": "https://..." }
-    return response.data['fileUrl'];
+  Future<void> confirmUpload(String jobId) async {
+    await _dio.post(ApiEndpoints.uploadConfirm(jobId));
   }
-}
-
-// Đây là Provider sẽ được sinh ra
-@riverpod
-UploadRemoteDataSource uploadRemoteDataSource(UploadRemoteDataSourceRef ref) {
-  return UploadRemoteDataSourceImpl(ref.watch(dioProvider));
 }

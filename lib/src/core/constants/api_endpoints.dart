@@ -6,8 +6,10 @@ class ApiEndpoints {
   static const Duration connectionTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);
 
-  // 2. Base URL (Sau này lấy từ .env, giờ tạm để đây)
-  static const String baseUrl = 'https://api.example.com/api/v1';
+  // 2. Base URL (Localhost backend)
+  // Android Emulator: 'http://10.0.2.2:8000/api/v1'
+  // iOS Simulator: 'http://localhost:8000/api/v1'
+  static const String baseUrl = 'http://localhost:8000/api/v1';
 
   // 3. Auth Routes
   static const String login = '/auth/login';
@@ -19,8 +21,8 @@ class ApiEndpoints {
 
   // 5. Upload Routes
   static const String uploadInit = '/upload/init';
-  static const String uploadChunk = '/upload/chunk';
-  static const String uploadComplete = '/upload/complete';
+  static String uploadConfirm(String jobId) => '/upload/$jobId/confirm';
+
 
   // Helpers để nối chuỗi cho gọn
   static String postDetail(String id) => '$posts/$id';

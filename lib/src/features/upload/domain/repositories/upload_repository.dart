@@ -1,7 +1,11 @@
-import '../entities/file_chunk.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
+import '../../data/datasources/upload_remote_datasource.dart';
 
 abstract class UploadRepository {
-  Future<String> initUpload(String fileName, int fileSize);
-  Future<void> uploadChunk(FileChunk chunk);
-  Future<String> completeUpload(String uploadId);
+  Future<InitUploadResponse> initUpload(String fileName);
+
+  Future<void> uploadFile(String url, File file, CancelToken cancelToken, Function(double) onProgress);
+
+  Future<void> confirmUpload(String jobId);
 }

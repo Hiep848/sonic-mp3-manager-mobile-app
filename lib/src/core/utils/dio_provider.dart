@@ -1,12 +1,13 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../constants/api_endpoints.dart';
 
 part 'dio_provider.g.dart';
 
-@Riverpod(keepAlive: true)
-Dio dio(DioRef ref) {
+@riverpod
+Dio dio(Ref ref) {
   // Cấu hình BaseOptions cho toàn bộ app
   final options = BaseOptions(
     baseUrl: ApiEndpoints.baseUrl, // URL giả định

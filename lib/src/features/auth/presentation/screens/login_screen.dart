@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_login_buttons.dart';
@@ -31,12 +32,27 @@ class LoginScreen extends HookConsumerWidget {
 
     // Lắng nghe state để show snackbar hoặc chuyển màn hình
     ref.listen(authControllerProvider, (previous, next) {
-      if (next is AsyncError) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Lỗi: ${next.error}')));
-      } else if (next is AsyncData) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đăng nhập thành công! (Mock)')));
+      // 1. Nếu đang Loading -> Hiện Dialog
+      if (next is AsyncLoading) {
+        AppToast.showLoading(context, message: "Đang đăng nhập...");
+      }
+      // 2. Nếu xong (Data hoặc Error) -> Tắt Dialog trước
+      else {
+        // Chỉ tắt nếu trước đó đang loading (tránh tắt nhầm màn hình khác)
+        if (previous is AsyncLoading) {
+          AppToast.hideLoading(context);
+        }
+
+        // 3. Sau đó mới hiện thông báo
+        if (next is AsyncError) {
+          AppToast.showErrorDialog(
+            context,
+            title: 'Lỗi đăng nhập',
+            message: '${next.error}',
+          );
+        } else if (next is AsyncData) {
+          AppToast.showSuccess(context, 'Chào mừng trở lại!');
+        }
       }
     });
 
@@ -107,7 +123,7 @@ class LoginScreen extends HookConsumerWidget {
                 const SocialLoginButtons(),
                 const Gap(AppSizes.p16),
                 TextButton(
-                  onPressed: () => context.push('/register'),
+                  onPressed: () => context.go('/register'),
                   child: const Text("Don't have an account? Sign Up"),
                 ),
               ],

@@ -7,7 +7,6 @@ void setupMockApi(Dio dio) {
   final adapter = DioAdapter(dio: dio);
 
   // ✅ Mock Login Endpoint
-  // Thêm data: Matchers.any để chấp nhận mọi body request
   adapter.onPost(
     '${ApiEndpoints.baseUrl}${ApiEndpoints.login}',
     (server) {
@@ -22,7 +21,7 @@ void setupMockApi(Dio dio) {
         delay: const Duration(seconds: 1),
       );
     },
-    data: Matchers.any, // <--- QUAN TRỌNG: Chấp nhận mọi data gửi lên
+    data: Matchers.any,
   );
 
   // ✅ Mock Register Endpoint
@@ -87,9 +86,7 @@ void setupMockApi(Dio dio) {
     },
   );
 
-  // ✅ Mock Get Post Detail Endpoint (SỬA LỖI REGEXP)
-  // Không dùng r'' (raw string) khi có biến nội suy ${...}
-  // Dùng \\d+ để thay thế cho \d+ trong chuỗi thường
+  // ✅ Mock Get Post Detail Endpoint
   adapter.onGet(
     RegExp('${ApiEndpoints.baseUrl}${ApiEndpoints.posts}/\\d+'),
     (server) {
@@ -129,50 +126,66 @@ void setupMockApi(Dio dio) {
 
   // ---------------- UPLOAD MOCKS ----------------
 
-  // 1. Mock Init Upload
+  // 1. MOCK INIT UPLOAD
   adapter.onPost(
-    '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadInit}',
+    ApiEndpoints.uploadInit,
+    (server) {
+      server.reply(200,
+          {'uploadId': 'upload_id_fake_12345', 'key': 'songs/mock_song.mp3'},
+          delay: const Duration(milliseconds: 500));
+    },
+    data: Matchers.any,
+  );
+
+  // 2. MOCK PRESIGNED URL
+  // adapter.onGet(
+  //   ApiEndpoints.getPresignedUrl,
+  //   (server) {
+  //     server.reply(
+  //         200,
+  //         {
+  //           'url': 'https://fake-s3.com/upload-chunk',
+  //         },
+  //         delay: const Duration(milliseconds: 200));
+  //   },
+  // );
+
+  // 3. MOCK S3 PUT
+  adapter.onPut(
+    'https://fake-s3.com/upload-chunk',
     (server) {
       server.reply(
         200,
-        {
-          // Trả về một ID giả ngẫu nhiên
-          'uploadId': 'upload_session_${DateTime.now().millisecondsSinceEpoch}',
-        },
+        {},
         delay: const Duration(milliseconds: 500),
-      );
-    },
-    data: Matchers.any,
-  );
-
-  // 2. Mock Chunk Upload
-  // Logic: Server nhận chunk -> Trả lời OK ngay
-  adapter.onPost(
-    '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadChunk}',
-    (server) {
-      server.reply(
-        200,
-        {'status': 'chunk_received'}, 
-        // Delay giả lập mạng chậm (quan trọng để thấy thanh progress chạy)
-        delay: const Duration(milliseconds: 300), 
-      );
-    },
-    data: Matchers.any,
-  );
-
-  // 3. Mock Complete Upload
-  adapter.onPost(
-    '${ApiEndpoints.baseUrl}${ApiEndpoints.uploadComplete}',
-    (server) {
-      server.reply(
-        200,
-        {
-          'fileUrl': 'https://server.com/uploads/song_final.mp3',
-          'message': 'Merge success',
+        headers: {
+          // [SỬA LẠI] Phải để trong List [] vì thư viện yêu cầu thế
+          'ETag': ['"mock-etag-12345"'],
         },
-        delay: const Duration(seconds: 2), // Giả lập server đang ghép file mất thời gian
       );
     },
+    // [QUAN TRỌNG NHẤT] Thêm dòng này để Mock chấp nhận mọi headers (như binary, octet-stream...)
+    // Nếu thiếu dòng này -> Nó sẽ báo lỗi "Assertion failed" hoặc "Map not subtype of String" khi cố đọc header lạ.
+    // headers: {
+    //   'Content-Type': 'application/octet-stream',
+    // },
+
     data: Matchers.any,
   );
+
+  // 4. MOCK COMPLETE
+  // adapter.onPost(
+  //   ApiEndpoints.uploadComplete,
+  //   (server) {
+  //     server.reply(
+  //       200,
+  //       {
+  //         'message': 'Ghép file thành công!',
+  //         'location': 'https://s3.aws.../song.mp3'
+  //       },
+  //       delay: const Duration(seconds: 2),
+  //     );
+  //   },
+  //   data: Matchers.any,
+  // );
 }

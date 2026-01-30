@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/app_toast.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_login_buttons.dart';
@@ -29,12 +30,31 @@ class RegisterScreen extends HookConsumerWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
 
     ref.listen(authControllerProvider, (previous, next) {
-      if (next is AsyncError) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Lỗi: ${next.error}')));
-      } else if (next is AsyncData) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đăng ký thành công! (Mock)')));
+      // 1. Nếu đang Loading -> Hiện Dialog
+      if (next is AsyncLoading) {
+        AppToast.showLoading(context, message: "Đang khởi tạo tài khoản...");
+      }
+      // 2. Nếu xong (Data hoặc Error) -> Tắt Dialog trước
+      else {
+        // Chỉ tắt nếu trước đó đang loading
+        if (previous is AsyncLoading) {
+          AppToast.hideLoading(context);
+        }
+
+        // 3. Sau đó mới hiện thông báo
+        if (next is AsyncError) {
+          AppToast.showErrorDialog(
+            context,
+            title: 'Lỗi đăng ký',
+            message: '${next.error}',
+          );
+        } else if (next is AsyncData) {
+          AppToast.showSuccessDialog(
+            context,
+            title: 'Thành công',
+            message: 'Tài khoản của bạn đã được tạo! Đăng nhập ngay.',
+          );
+        }
       }
     });
 
@@ -136,7 +156,7 @@ class RegisterScreen extends HookConsumerWidget {
                 const SocialLoginButtons(),
                 const Gap(AppSizes.p16),
                 TextButton(
-                  onPressed: () => context.push('/login'),
+                  onPressed: () => context.go('/login'),
                   child: const Text('Already have an account? Login'),
                 ),
               ],
