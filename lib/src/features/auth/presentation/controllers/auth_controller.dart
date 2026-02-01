@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../domain/providers/providers.dart';
 import '../../../../core/app_startup/app_startup_provider.dart';
+import '../../domain/providers/providers.dart';
 
 part 'auth_controller.g.dart';
 
@@ -14,20 +14,26 @@ class AuthController extends _$AuthController {
     // chứ không cần hứng dữ liệu User để hiển thị ngay tại nút bấm.
   }
 
-  Future<void> login(String email, String password) async {
-    // 1. Chuyển trạng thái sang Loading (UI sẽ hiện vòng xoay)
-    state = const AsyncLoading();
-
-    // 2. Gọi UseCase (đã viết hôm kia)
-    // AsyncValue.guard là hàm cực xịn: Nó tự động try-catch.
-    // Nếu thành công -> state = AsyncData
-    // Nếu có lỗi (Exception) -> state = AsyncError
+  Future<void> traditionalLogin(String email, String password) async {
+    state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final loginUseCase = ref.read(loginUseCaseProvider);
-      await loginUseCase.call(email: email, password: password);
+      final useCase = ref.read(traditionalLoginUseCaseProvider);
+      await useCase({
+        'email': email,
+        'password': password,
+      });
     });
+    if (state is AsyncData) {
+      ref.read(isLoggedInProvider.notifier).state = true;
+    }
+  }
 
-    // Nếu thành công, kích hoạt flag isLoggedIn để Router redirect
+  Future<void> googleLogin(String authCode) async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final useCase = ref.read(googleLoginUseCaseProvider);
+      await useCase({'authCode': authCode});
+    });
     if (state is AsyncData) {
       ref.read(isLoggedInProvider.notifier).state = true;
     }

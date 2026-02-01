@@ -1,24 +1,70 @@
 import '../entities/user_entity.dart';
 import '../repositories/auth_repository.dart';
 
-class LoginUseCase {
-  final AuthRepository _authRepository;
+abstract interface class LoginStrategy {
+  Future<UserEntity> login(
+    AuthRepository repository,
+    Map<String, dynamic> credentials,
+  );
 
-  // Dependency Injection: UseCase cần Repository để hoạt động
-  LoginUseCase(this._authRepository);
+  void validate(Map<String, dynamic> credentials);
+}
 
-  // Hàm call giúp class hoạt động như một hàm (Callable Class)
-  // UI chỉ cần gọi: loginUseCase(email, pass)
-  Future<UserEntity> call({required String email, required String password}) {
-    // 1. Validate logic (Ví dụ)
-    if (!email.contains('@')) {
+class TraditionalLoginStrategy implements LoginStrategy {
+  @override
+  void validate(Map<String, dynamic> credentials) {
+    final email = credentials['email'] as String?;
+    final password = credentials['password'] as String?;
+    if (email == null || !email.contains('@')) {
       throw Exception('Email không hợp lệ');
     }
-    if (password.length < 6) {
-      throw Exception('Mật khẩu quá ngắn');
+    if (password == null || password.length < 6) {
+      throw Exception('Mật khẩu phải có ít nhất 6 ký tự');
     }
+  }
 
-    // 2. Gọi xuống tầng Repository (Data Layer)
-    return _authRepository.login(email: email, password: password);
+  @override
+  Future<UserEntity> login(
+    AuthRepository repository,
+    Map<String, dynamic> credentials,
+  ) {
+    print('Email: ${credentials['email']}');
+    print('Password: ${credentials['password']}');
+    return repository.traditionalLogin(
+      email: (credentials['email'] as String?) ?? '',
+      password: (credentials['password'] as String?) ?? '',
+    );
+  }
+}
+
+class GoogleLoginStrategy implements LoginStrategy {
+  @override
+  void validate(Map<String, dynamic> credentials) {
+    final authCode = credentials['authCode'] as String?;
+    if (authCode == null || authCode.isEmpty) {
+      throw Exception('Auth code không hợp lệ');
+    }
+  }
+
+  @override
+  Future<UserEntity> login(
+    AuthRepository repository,
+    Map<String, dynamic> credentials,
+  ) {
+    return repository.googleLogin(
+      authCode: (credentials['authCode'] as String?) ?? '',
+    );
+  }
+}
+
+class LoginUseCase {
+  final AuthRepository _repository;
+  final LoginStrategy _strategy;
+
+  LoginUseCase(this._repository, this._strategy);
+
+  Future<UserEntity> call(Map<String, dynamic> credentials) async {
+    _strategy.validate(credentials);
+    return await _strategy.login(_repository, credentials);
   }
 }

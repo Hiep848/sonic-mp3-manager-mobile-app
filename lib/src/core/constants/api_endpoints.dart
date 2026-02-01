@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class ApiEndpoints {
   // Không cho phép khởi tạo class này
   ApiEndpoints._();
@@ -9,11 +11,12 @@ class ApiEndpoints {
   // 2. Base URL (Localhost backend)
   // Android Emulator: 'http://10.0.2.2:8000/api/v1'
   // iOS Simulator: 'http://localhost:8000/api/v1'
-  static const String baseUrl = 'http://localhost:8000/api/v1';
+  static final String baseUrl =
+      'http://${Platform.isAndroid ? '10.0.2.2' : 'localhost'}localhost:8000/api/v1';
 
   // 3. Auth Routes
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
+  static const String login = '/auth/traditional-login';
+  static const String register = '/auth/traditional-register';
   static const String userProfile = '/auth/me';
 
   // 4. Post Routes
@@ -22,7 +25,6 @@ class ApiEndpoints {
   // 5. Upload Routes
   static const String uploadInit = '/upload/init';
   static String uploadConfirm(String jobId) => '/upload/$jobId/confirm';
-
 
   // Helpers để nối chuỗi cho gọn
   static String postDetail(String id) => '$posts/$id';

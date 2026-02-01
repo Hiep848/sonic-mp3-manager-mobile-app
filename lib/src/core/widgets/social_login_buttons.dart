@@ -1,13 +1,57 @@
-import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../../../../../gen/assets.gen.dart';
+import 'dart:async';
 
-class SocialLoginButtons extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gap/gap.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../../../../../gen/assets.gen.dart';
+import '../../features/auth/presentation/controllers/google_sign_in_controller.dart';
+import '../utils/app_toast.dart';
+
+class SocialLoginButtons extends ConsumerWidget {
   const SocialLoginButtons({super.key});
 
+  Future<void> _handleGoogleLogin(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref.read(googleSignInControllerProvider.notifier).loginViaBackend();
+    } on GoogleSignInException catch (e) {
+      if (context.mounted) {
+        AppToast.showErrorDialog(
+          context,
+          title: 'Lỗi Đăng nhập',
+          message: e.toString(),
+        );
+        // ignore: avoid_print
+        print(
+            'Google Sign In error: code: ${e.code.name} description:${e.description} details:${e.details}');
+      }
+    } on StateError {
+      if (context.mounted) {
+        AppToast.showErrorDialog(
+          context,
+          title: 'Lỗi Google',
+          message:
+              'Không lấy được Auth Code. Vui lòng kiểm tra cấu hình Console.',
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.showErrorDialog(
+          context,
+          title: 'Lỗi',
+          message: e.toString(),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final googleInit = ref.watch(googleSignInControllerProvider);
+    final isGoogleReady = googleInit is AsyncData<void>;
+
     return Column(
       children: [
         const Row(
@@ -35,7 +79,14 @@ class SocialLoginButtons extends StatelessWidget {
                 label: 'Google',
                 color: Colors.white,
                 textColor: Colors.red,
-                onTap: () {},
+                onTap: isGoogleReady
+                    ? () => _handleGoogleLogin(context, ref)
+                    : () {
+                        if (context.mounted) {
+                          AppToast.showInfo(
+                              context, 'Google Sign-In đang khởi tạo...');
+                        }
+                      },
               ),
             ),
             const Gap(16),
@@ -49,7 +100,10 @@ class SocialLoginButtons extends StatelessWidget {
                 label: 'Facebook',
                 color: Colors.blue.shade50,
                 textColor: Colors.blue.shade800,
-                onTap: () {},
+                onTap: () {
+                  // TODO: Implement Facebook Login later
+                  AppToast.showInfo(context, 'Tính năng đang phát triển');
+                },
               ),
             ),
           ],
@@ -59,6 +113,7 @@ class SocialLoginButtons extends StatelessWidget {
   }
 }
 
+// Giữ nguyên widget con này
 class _SocialButton extends StatelessWidget {
   final Widget iconWidget;
   final String label;
@@ -84,6 +139,7 @@ class _SocialButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade300), // Thêm viền cho đẹp
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
