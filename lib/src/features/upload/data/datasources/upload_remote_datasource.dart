@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -12,9 +15,11 @@ UploadRemoteDataSource uploadRemoteDataSource(UploadRemoteDataSourceRef ref) {
 
 class InitUploadResponse {
   final String jobId;
-  final String uploadUrl; // [FIX] Đổi tên cho khớp backend
+  final String fileName;
+  final String uploadUrl;
 
-  InitUploadResponse({required this.jobId, required this.uploadUrl});
+  InitUploadResponse(
+      {required this.jobId, required this.uploadUrl, required this.fileName});
 }
 
 abstract class UploadRemoteDataSource {
@@ -22,14 +27,16 @@ abstract class UploadRemoteDataSource {
 
   Future<void> uploadFileToS3({
     required String url,
-    required Stream<List<int>> fileStream,
-    required int length,
+    required File file,
     required String contentType,
     CancelToken? cancelToken,
     required Function(int, int)? onSendProgress,
   });
 
-  Future<void> confirmUpload(String jobId);
+  Future<void> confirmUpload(
+      String jobId, String fileName, double duration, int fileSize);
+
+  Stream<Map<String, dynamic>> listenToProcessingProgress(String jobId);
 }
 
 class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
@@ -41,39 +48,39 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
   Future<InitUploadResponse> initUpload(
       String fileName, String contentType) async {
     final response = await _dio.post(
-      '/upload/init', // [FIX] Sử dụng đường dẫn tương đối nếu baseUrl đã cấu hình
+      '/upload/init',
       data: {
         'filename': fileName,
-        'content_type': contentType,
+        'contentType': contentType,
       },
     );
     return InitUploadResponse(
-      jobId: response.data['job_id'],
-      // [FIX] Backend trả về 'upload_url', không phải 'presigned_url'
-      uploadUrl: response.data['upload_url'],
+      jobId: response.data['jobId'],
+      uploadUrl: response.data['presignedUrl'],
+      fileName: response.data['fileName'],
     );
   }
 
   @override
   Future<void> uploadFileToS3({
     required String url,
-    required Stream<List<int>> fileStream,
-    required int length,
+    required File file,
     required String contentType,
     CancelToken? cancelToken,
     required Function(int, int)? onSendProgress,
   }) async {
-    // [QUAN TRỌNG] Dùng instance Dio mới hoàn toàn để tránh dính Header Auth của App
     final s3Dio = Dio();
-
+    final length = await file.length();
+    final stream = file.openRead();
     await s3Dio.put(
       url,
-      data: fileStream,
+      data: stream,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,
       options: Options(
         headers: {
-          Headers.contentLengthHeader: length, // Bắt buộc với S3 PUT
+          Headers.contentLengthHeader:
+              length, // [FIX] Truyền int, không phải Future<int>
           Headers.contentTypeHeader: contentType,
         },
       ),
@@ -81,7 +88,60 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
   }
 
   @override
-  Future<void> confirmUpload(String jobId) async {
-    await _dio.post('/upload/$jobId/confirm');
+  Future<void> confirmUpload(
+      String jobId, String fileName, double duration, int fileSize) async {
+    int retryCount = 0;
+    const maxRetries = 3;
+
+    while (retryCount < maxRetries) {
+      try {
+        await _dio.post('/upload/confirm', data: {
+          'jobId': jobId,
+          'title': fileName,
+          'duration': duration,
+          'fileSize': fileSize,
+        });
+        return; // Thành công thì thoát
+      } catch (e) {
+        retryCount++;
+        print("Confirm failed ($retryCount/$maxRetries). Error: $e");
+        if (retryCount >= maxRetries) {
+          rethrow;
+        }
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    }
+  }
+
+  @override
+  Stream<Map<String, dynamic>> listenToProcessingProgress(String jobId) async* {
+    try {
+      final response = await _dio.get(
+        '/upload/progress/$jobId/stream',
+        options: Options(
+          responseType: ResponseType.stream,
+          receiveTimeout: Duration.zero,
+        ),
+      );
+      final stream = response.data.stream as Stream<List<int>>;
+      await for (final bytes in stream) {
+        final String chunk = utf8.decode(bytes);
+        final lines = chunk.split('\n');
+
+        for (final line in lines) {
+          if (line.startsWith('data: ')) {
+            final dataStr = line.substring(6).trim();
+            if (dataStr == "Stream closed") continue;
+
+            try {
+              final json = jsonDecode(dataStr) as Map<String, dynamic>;
+              yield json;
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      throw Exception("SSE Connection failed: $e");
+    }
   }
 }

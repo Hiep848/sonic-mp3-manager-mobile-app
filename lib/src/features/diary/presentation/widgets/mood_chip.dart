@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/models/mood.dart';
 
 class MoodChip extends StatelessWidget {
-  final Mood mood;
+  final Mood? mood;
   final bool isSelected;
   final VoidCallback? onTap;
 
@@ -18,19 +19,25 @@ class MoodChip extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    if (mood == null) {
+      return const SizedBox.shrink();
+    }
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
+          color: isSelected
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? Border.all(color: colorScheme.primary)
               : Border.all(color: Colors.transparent),
         ),
         child: Text(
-          mood.label,
+          mood!.label,
           style: theme.textTheme.labelMedium?.copyWith(
             color: isSelected
                 ? colorScheme.onPrimary

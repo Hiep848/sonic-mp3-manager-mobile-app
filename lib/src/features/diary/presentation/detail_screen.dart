@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../../l10n/app_localizations.dart';
 import '../data/mock_post_repository.dart';
 import '../domain/models/post_model.dart';
 import 'widgets/mood_chip.dart';
 import 'widgets/quick_audio_player.dart';
-
-import '../../../../l10n/app_localizations.dart';
 
 final postDetailProvider =
     FutureProvider.family<AudioPost?, String>((ref, id) async {
@@ -94,7 +94,7 @@ class DetailScreen extends ConsumerWidget {
                           MoodChip(mood: post.mood),
                           const SizedBox(width: 12),
                           Text(
-                            '${l10n.detailRecorded} ${post.recordDate.day}/${post.recordDate.month}/${post.recordDate.year}',
+                            '${l10n.detailRecorded} ${post.recordDate?.day}/${post.recordDate?.month}/${post.recordDate?.year}',
                             style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant),
                           ),
@@ -106,7 +106,10 @@ class DetailScreen extends ConsumerWidget {
                       Text(l10n.detailRecording,
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      QuickAudioPlayer(duration: post.duration),
+                      QuickAudioPlayer(
+                        duration: post.duration,
+                        audioUrl: post.streamUrl,
+                      ),
                       const SizedBox(height: 24),
 
                       // Hashtags

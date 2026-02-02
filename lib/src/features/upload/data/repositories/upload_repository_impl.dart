@@ -30,16 +30,10 @@ class UploadRepositoryImpl implements UploadRepository {
   @override
   Future<void> uploadFile(String url, File file, CancelToken cancelToken,
       Function(double) onProgress) async {
-    final length = await file.length();
-    final stream = file.openRead();
-
-    // Detect lại contentType cho chắc chắn
     final contentType = lookupMimeType(file.path) ?? 'application/octet-stream';
-
     await _remoteDataSource.uploadFileToS3(
       url: url,
-      fileStream: stream,
-      length: length,
+      file: file, // Truyền file vào đây
       contentType: contentType,
       cancelToken: cancelToken,
       onSendProgress: (sent, total) {
@@ -51,7 +45,8 @@ class UploadRepositoryImpl implements UploadRepository {
   }
 
   @override
-  Future<void> confirmUpload(String jobId) {
-    return _remoteDataSource.confirmUpload(jobId);
+  Future<void> confirmUpload(
+      String jobId, String fileName, double duration, int fileSize) {
+    return _remoteDataSource.confirmUpload(jobId, fileName, duration, fileSize);
   }
 }

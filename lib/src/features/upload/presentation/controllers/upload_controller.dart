@@ -1,59 +1,103 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:dio/dio.dart'; // Import Dio
+import 'package:dio/dio.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../domain/usecases/upload_file_usecase.dart';
+import '../../data/datasources/upload_remote_datasource.dart';
+import '../../domain/models/upload_state.dart';
 
 part 'upload_controller.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class UploadController extends _$UploadController {
-  // Giữ token để có thể hủy khi cần
   CancelToken? _cancelToken;
 
   @override
-  FutureOr<double?> build() {
-    return null; // State null = Chưa upload (Hiện nút chọn file)
+  UploadState build() {
+    return const UploadState(stage: UploadStage.idle);
   }
 
   Future<void> uploadFile(File file) async {
-    // 1. Reset state & Tạo token mới
-    state = const AsyncData(0.0);
+    state = const UploadState(stage: UploadStage.uploading, progress: 0.0);
     _cancelToken = CancelToken();
 
+    final dataSource = ref.read(uploadRemoteDataSourceProvider);
+    String? currentJobId;
+
     try {
-      final useCase = ref.read(uploadFileUseCaseProvider);
+      final fileName = file.path.split('/').last;
+      final initData = await dataSource.initUpload(fileName, 'audio/mpeg');
+      currentJobId = initData.jobId;
+      state = state.copyWith(jobId: currentJobId);
+      if (_cancelToken!.isCancelled) throw _cancelToken!.cancelError!;
+      await dataSource.uploadFileToS3(
+          url: initData.uploadUrl,
+          file: file,
+          contentType: 'audio/mpeg',
+          cancelToken: _cancelToken,
+          onSendProgress: (sent, total) {
+            if (!_cancelToken!.isCancelled) {
+              state = state.copyWith(progress: sent / total);
+            }
+          });
 
-      // 2. Gọi UseCase và lắng nghe Stream
-      final stream = useCase.call(file, _cancelToken!);
+      state = state.copyWith(stage: UploadStage.confirming, progress: 1.0);
+      final fileSize = await file.length();
 
-      // 3. Vòng lặp lắng nghe từng sự kiện progress bắn ra từ UseCase
-      await for (final progress in stream) {
-        // Cập nhật UI
-        state = AsyncData(progress);
+      final player = AudioPlayer();
+      final duration = await player.setFilePath(file.path);
+      final durationInSeconds = duration?.inSeconds.toDouble() ?? 0.0;
+      await player.dispose();
+      await dataSource.confirmUpload(
+        currentJobId,
+        fileName,
+        durationInSeconds,
+        fileSize,
+      );
+      state = state.copyWith(stage: UploadStage.processing, progress: 0.0);
+
+      final sseStream = dataSource.listenToProcessingProgress(currentJobId);
+
+      await for (final event in sseStream) {
+        final status = event['status'];
+        final progressVal = (event['progress'] as num?)?.toDouble() ?? 0;
+        final progress = progressVal > 1 ? progressVal / 100.0 : progressVal;
+        if (status == 'COMPLETED') {
+          state = state.copyWith(stage: UploadStage.completed, progress: 1.0);
+          break;
+        } else if (status == 'FAILED' || status == 'CANCELLED') {
+          throw Exception(event['message'] ?? 'Xử lý thất bại');
+        } else {
+          state = state.copyWith(progress: progress);
+        }
       }
 
-      // Khi vòng lặp kết thúc mà không lỗi -> Thành công
-      state = const AsyncData(1.0);
+      await Future.delayed(const Duration(seconds: 3));
+      state = const UploadState(stage: UploadStage.idle);
     } catch (e, st) {
-      // 4. Xử lý lỗi
+      print("Upload failed: $e\n$st");
       if (e is DioException && e.type == DioExceptionType.cancel) {
-        state = const AsyncData(null); // Reset về trạng thái chờ nếu hủy
+        state = const UploadState(stage: UploadStage.idle);
       } else {
-        state = AsyncError(e, st);
+        state = state.copyWith(
+            stage: UploadStage.failed, errorMessage: e.toString());
+        Future.delayed(const Duration(seconds: 5), () {
+          if (state.stage == UploadStage.failed) {
+            state = const UploadState(stage: UploadStage.idle);
+          }
+        });
       }
     } finally {
-      _cancelToken = null; // Dọn dẹp
+      _cancelToken = null;
     }
   }
 
-  // Hàm Hủy upload từ UI
   void cancelUpload() {
     if (_cancelToken != null && !_cancelToken!.isCancelled) {
-      _cancelToken!.cancel("Người dùng hủy upload");
-      state = const AsyncData(null);
+      _cancelToken!.cancel("User cancelled");
     }
+    state = const UploadState(stage: UploadStage.idle);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../domain/models/post_model.dart';
 import 'mood_chip.dart';
 import 'quick_audio_player.dart';
@@ -98,6 +99,7 @@ class AudioPostCard extends StatelessWidget {
                 // Audio Player
                 QuickAudioPlayer(
                   duration: post.duration,
+                  audioUrl: post.streamUrl,
                   isLight: hasBackground,
                 ),
 
@@ -135,7 +137,8 @@ class AudioPostCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
     return '${date.day}/${date.month}/${date.year}';
   }
 }
