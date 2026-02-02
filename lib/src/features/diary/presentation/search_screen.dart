@@ -12,14 +12,14 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
+        title: const TextField(
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Search title, content...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: Colors.white70),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18),
         ),
       ),
       body: ListView(

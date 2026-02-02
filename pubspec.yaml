@@ -26,7 +26,7 @@ dependencies:
   # --- Data Class ---
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
-  
+
   # --- UI & Routing ---
   gap: ^3.0.1
   go_router: ^14.6.0 # Version ổn định, tương thích tốt
@@ -41,13 +41,14 @@ dependencies:
   mime: ^2.0.0
 
   intl: ^0.20.2
+  google_sign_in: ^7.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  
+
   # --- Code Generation ---
-  
+
   build_runner: ^2.4.13 # Bản này rất ổn định, ít lỗi vặt
   flutter_gen_runner: ^5.12.0
   mocktail: ^1.0.3

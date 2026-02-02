@@ -3,48 +3,81 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
 import '../../../../core/utils/dio_provider.dart';
-import '../../domain/entities/user_entity.dart';
+import '../models/auth_response_model.dart';
 
 part 'auth_remote_datasource.g.dart';
 
-// Interface cho DataSource (Để sau này dễ Mock khi test)
-abstract class AuthRemoteDataSource {
-  Future<UserEntity> loginRequest(String email, String password);
-  // Thêm register
-  Future<UserEntity> registerRequest(
+abstract interface class LoginStrategy {
+  Future<AuthResponseModel> login(Map<String, dynamic> credentials);
+}
+
+class TraditionalLoginStrategy implements LoginStrategy {
+  final Dio _dio;
+
+  TraditionalLoginStrategy(this._dio);
+
+  @override
+  Future<AuthResponseModel> login(Map<String, dynamic> credentials) async {
+    try {
+      print('Performing traditional login with credentials: $credentials');
+      final response = await _dio.post(
+        '${ApiEndpoints.baseUrl}/auth/traditional-login',
+        data: {
+          'email': credentials['email'],
+          'password': credentials['password'],
+        },
+      );
+      return AuthResponseModel.fromJson(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+}
+
+class GoogleLoginStrategy implements LoginStrategy {
+  final Dio _dio;
+
+  GoogleLoginStrategy(this._dio);
+
+  @override
+  Future<AuthResponseModel> login(Map<String, dynamic> credentials) async {
+    try {
+      final response = await _dio.post(
+        '${ApiEndpoints.baseUrl}/auth/google-login',
+        data: {
+          'code': credentials['authCode'],
+        },
+      );
+      return AuthResponseModel.fromJson(response.data);
+    } on DioException {
+      rethrow;
+    }
+  }
+}
+
+abstract interface class AuthRemoteDataSource {
+  Future<AuthResponseModel> login(
+      LoginStrategy strategy, Map<String, dynamic> credentials);
+  Future<AuthResponseModel> registerRequest(
       String email, String password, String name);
 }
 
-// Implementation (Triển khai thật)
+// Implementation
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio _dio;
 
   AuthRemoteDataSourceImpl(this._dio);
 
   @override
-  Future<UserEntity> loginRequest(String email, String password) async {
-    try {
-      // 1. Gọi API thật (giả sử Backend quy ước như thế này)
-      final response = await _dio.post(
-        '${ApiEndpoints.baseUrl}${ApiEndpoints.login}',
-        data: {
-          'email': email,
-          'password': password,
-        },
-      );
-
-      // 2. Parse JSON thành Entity
-      // response.data chính là cái Map<String, dynamic> từ server
-      return UserEntity.fromJson(response.data);
-    } on DioException catch (e) {
-      // Xử lý lỗi từ Dio (400, 401, 500...)
-      // Ở đây ta cứ ném tiếp để Repository xử lý
-      throw e;
-    }
+  Future<AuthResponseModel> login(
+    LoginStrategy strategy,
+    Map<String, dynamic> credentials,
+  ) async {
+    return await strategy.login(credentials);
   }
 
   @override
-  Future<UserEntity> registerRequest(
+  Future<AuthResponseModel> registerRequest(
       String email, String password, String name) async {
     try {
       final response = await _dio.post(
@@ -55,18 +88,28 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'name': name,
         },
       );
-
-      return UserEntity.fromJson(response.data);
-    } on DioException catch (e) {
-      throw e;
+      return AuthResponseModel.fromJson(response.data);
+    } on DioException {
+      rethrow;
     }
   }
 }
 
-// Tạo Provider cho DataSource
 @riverpod
 AuthRemoteDataSource authRemoteDataSource(AuthRemoteDataSourceRef ref) {
-  // Lấy Dio instance từ core provider (sẽ tạo ở bước 3)
   final dio = ref.watch(dioProvider);
   return AuthRemoteDataSourceImpl(dio);
+}
+
+@riverpod
+TraditionalLoginStrategy traditionalLoginStrategy(
+    TraditionalLoginStrategyRef ref) {
+  final dio = ref.watch(dioProvider);
+  return TraditionalLoginStrategy(dio);
+}
+
+@riverpod
+GoogleLoginStrategy googleLoginStrategy(GoogleLoginStrategyRef ref) {
+  final dio = ref.watch(dioProvider);
+  return GoogleLoginStrategy(dio);
 }

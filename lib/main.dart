@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'l10n/app_localizations.dart';
 import 'src/core/app_startup/app_startup_provider.dart';
 import 'src/core/routing/app_router.dart';
-import 'src/core/utils/dio_provider.dart';
-import 'src/core/utils/mock_api_setup.dart';
 import 'src/core/theme/app_theme.dart';
+import 'src/core/utils/dio_provider.dart';
 import 'src/core/utils/locale_provider.dart';
 
 void main() {
@@ -19,7 +19,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dio = ref.watch(dioProvider);
-    setupMockApi(dio);
+    // setupMockApi(dio);
 
     final startupState = ref.watch(appStartupProvider);
     final locale = ref.watch(appLocaleProvider);

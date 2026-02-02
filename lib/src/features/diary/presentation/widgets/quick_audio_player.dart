@@ -33,7 +33,7 @@ class _QuickAudioPlayerState extends State<QuickAudioPlayer> {
       decoration: BoxDecoration(
         color: widget.isLight
             ? Colors.black.withOpacity(0.3)
-            : colorScheme.surfaceVariant.withOpacity(0.5),
+            : colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

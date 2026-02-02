@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mp3_management/src/features/diary/domain/models/mood.dart';
+import '../../domain/models/mood.dart';
 
 class MoodChip extends StatelessWidget {
   final Mood mood;
@@ -23,7 +23,7 @@ class MoodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary : colorScheme.surfaceVariant,
+          color: isSelected ? colorScheme.primary : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(20),
           border: isSelected
               ? Border.all(color: colorScheme.primary)

@@ -1,39 +1,68 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../data/datasources/auth_remote_datasource.dart';
+
+import '../../../../core/local_storage/storage_service.dart';
+import '../../data/datasources/auth_remote_datasource.dart' as data;
 import '../../data/repositories/auth_repository_impl.dart';
 import '../repositories/auth_repository.dart';
-import '../usecases/login_usecase.dart';
-import '../usecases/register_usecase.dart'; // Import
-import '../usecases/logout_usecase.dart'; // Import
-import '../../../../core/local_storage/storage_service.dart'; // Import
+import '../usecases/login_usecase.dart' as usecase;
+import '../usecases/logout_usecase.dart';
+import '../usecases/register_usecase.dart';
 
 part 'providers.g.dart';
 
-// [SỬA ĐOẠN NÀY]
-// Thay vì throw UnimplementedError, giờ ta trả về Implementation thật
+// Repository Provider
 @Riverpod(keepAlive: true)
 AuthRepository authRepository(AuthRepositoryRef ref) {
-  // Lấy datasource từ provider đã tạo ở Bước 1
-  final dataSource = ref.watch(authRemoteDataSourceProvider);
-  final storage = ref.watch(storageServiceProvider); // Lấy storage service
+  final dataSource = ref.watch(data.authRemoteDataSourceProvider);
+  final storage = ref.watch(storageServiceProvider);
 
-  return AuthRepositoryImpl(dataSource, storage); // Truyền vào Impl
+  // Use Data strategies for Repository
+  final traditionalStrategy = ref.watch(data.traditionalLoginStrategyProvider);
+  final googleStrategy = ref.watch(data.googleLoginStrategyProvider);
+
+  return AuthRepositoryImpl(
+    dataSource,
+    storage,
+    traditionalStrategy,
+    googleStrategy,
+  );
+}
+
+// Domain Strategy Providers
+// Renamed to avoid conflict with Data strategy providers
+@riverpod
+usecase.TraditionalLoginStrategy usecaseTraditionalLoginStrategy(
+    UsecaseTraditionalLoginStrategyRef ref) {
+  return usecase.TraditionalLoginStrategy();
 }
 
 @riverpod
-LoginUseCase loginUseCase(Ref ref) {
-  final repository = ref.watch(authRepositoryProvider);
-  return LoginUseCase(repository);
+usecase.GoogleLoginStrategy usecaseGoogleLoginStrategy(
+    UsecaseGoogleLoginStrategyRef ref) {
+  return usecase.GoogleLoginStrategy();
 }
 
-// Register UseCase provider
+// UseCase Providers
+@riverpod
+usecase.LoginUseCase traditionalLoginUseCase(TraditionalLoginUseCaseRef ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  final strategy = ref.watch(usecaseTraditionalLoginStrategyProvider);
+  return usecase.LoginUseCase(repository, strategy);
+}
+
+@riverpod
+usecase.LoginUseCase googleLoginUseCase(GoogleLoginUseCaseRef ref) {
+  final repository = ref.watch(authRepositoryProvider);
+  final strategy = ref.watch(usecaseGoogleLoginStrategyProvider);
+  return usecase.LoginUseCase(repository, strategy);
+}
+
+// Other UseCases
 @riverpod
 RegisterUseCase registerUseCase(RegisterUseCaseRef ref) {
   return RegisterUseCase(ref.watch(authRepositoryProvider));
 }
 
-// Logout UseCase provider
 @riverpod
 LogoutUseCase logoutUseCase(LogoutUseCaseRef ref) {
   return LogoutUseCase(ref.watch(authRepositoryProvider));
