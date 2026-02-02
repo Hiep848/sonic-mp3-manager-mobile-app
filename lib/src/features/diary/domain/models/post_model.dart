@@ -14,7 +14,7 @@ class AudioPost with _$AudioPost {
     @Default(0) int fileSize,
     DateTime? recordDate,
     required DateTime uploadDate,
-    Mood? mood,
+    @JsonKey(fromJson: _moodFromJson, toJson: _moodToJson) Mood? mood,
     String? albumId,
     @Default([]) List<String> hashtags,
     String? textContent,
@@ -26,3 +26,15 @@ class AudioPost with _$AudioPost {
   factory AudioPost.fromJson(Map<String, dynamic> json) =>
       _$AudioPostFromJson(json);
 }
+
+Mood? _moodFromJson(Object? json) {
+  if (json is String) {
+    return Mood.values.firstWhere(
+      (e) => e.name.toLowerCase() == json.toLowerCase(),
+      orElse: () => Mood.neutral,
+    );
+  }
+  return null;
+}
+
+String? _moodToJson(Mood? mood) => mood?.name;

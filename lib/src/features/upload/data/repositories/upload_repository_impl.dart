@@ -49,4 +49,9 @@ class UploadRepositoryImpl implements UploadRepository {
       String jobId, String fileName, double duration, int fileSize) {
     return _remoteDataSource.confirmUpload(jobId, fileName, duration, fileSize);
   }
+
+  @override
+  Future<void> cancelJob(String jobId) {
+    return _remoteDataSource.cancelJob(jobId);
+  }
 }

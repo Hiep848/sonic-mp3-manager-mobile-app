@@ -37,6 +37,8 @@ abstract class UploadRemoteDataSource {
       String jobId, String fileName, double duration, int fileSize);
 
   Stream<Map<String, dynamic>> listenToProcessingProgress(String jobId);
+
+  Future<void> cancelJob(String jobId);
 }
 
 class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
@@ -79,8 +81,7 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
       onSendProgress: onSendProgress,
       options: Options(
         headers: {
-          Headers.contentLengthHeader:
-              length, // [FIX] Truyền int, không phải Future<int>
+          Headers.contentLengthHeader: length,
           Headers.contentTypeHeader: contentType,
         },
       ),
@@ -142,6 +143,15 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
       }
     } catch (e) {
       throw Exception("SSE Connection failed: $e");
+    }
+  }
+
+  @override
+  Future<void> cancelJob(String jobId) async {
+    try {
+      await _dio.post('/upload/$jobId/cancel');
+    } catch (e, st) {
+      print("Error cancelling job $jobId: $e at\n $st");
     }
   }
 }

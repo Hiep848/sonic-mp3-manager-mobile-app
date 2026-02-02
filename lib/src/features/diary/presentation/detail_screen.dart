@@ -1,60 +1,168 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:gap/gap.dart';
+import 'package:open_filex/open_filex.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../data/mock_post_repository.dart';
+import '../data/repositories/post_repository.dart';
+import '../domain/models/mood.dart';
 import '../domain/models/post_model.dart';
 import 'widgets/mood_chip.dart';
 import 'widgets/quick_audio_player.dart';
 
+// Provider lấy chi tiết bài viết (Dùng autoDispose để luôn refresh khi vào lại)
 final postDetailProvider =
-    FutureProvider.family<AudioPost?, String>((ref, id) async {
-  final repository = ref.watch(mockPostRepositoryProvider);
+    FutureProvider.autoDispose.family<AudioPost, String>((ref, id) async {
+  final repository = ref.watch(postRepositoryProvider);
   return repository.getPostById(id);
 });
 
-class DetailScreen extends ConsumerWidget {
+class DetailScreen extends ConsumerStatefulWidget {
   final String postId;
-
   const DetailScreen({super.key, required this.postId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final postAsync = ref.watch(postDetailProvider(postId));
+  ConsumerState<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends ConsumerState<DetailScreen> {
+  bool _isEditing = false;
+  bool _isSaving = false;
+  bool _isDownloading = false;
+
+  // Controllers
+  late TextEditingController _titleController;
+  late TextEditingController _contentController;
+  late TextEditingController _hashtagsController;
+  Mood? _selectedMood;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController();
+    _contentController = TextEditingController();
+    _hashtagsController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _contentController.dispose();
+    _hashtagsController.dispose();
+    super.dispose();
+  }
+
+  // Hàm điền dữ liệu vào Controller khi mới load xong
+  void _populateControllers(AudioPost post) {
+    if (_titleController.text.isEmpty) {
+      _titleController.text = post.title;
+      _contentController.text = post.textContent ?? '';
+      _hashtagsController.text = post.hashtags.join(" ");
+      _selectedMood = post.mood ?? Mood.neutral;
+    }
+  }
+
+  Future<void> _saveChanges(AudioPost originalPost) async {
+    setState(() => _isSaving = true);
+    try {
+      final updatedPost = originalPost.copyWith(
+        title: _titleController.text.trim(),
+        textContent: _contentController.text.trim(),
+        mood: _selectedMood ?? originalPost.mood,
+        hashtags: _hashtagsController.text
+            .trim()
+            .split(' ')
+            .where((s) => s.isNotEmpty)
+            .toList(),
+      );
+
+      await ref
+          .read(postRepositoryProvider)
+          .updatePost(widget.postId, updatedPost);
+
+      // Refresh lại dữ liệu để hiển thị cái mới nhất
+      ref.invalidate(postDetailProvider(widget.postId));
+
+      setState(() {
+        _isEditing = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Đã lưu thay đổi!')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      }
+    } finally {
+      setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _handleDownload(String postId, String format) async {
+    setState(() => _isDownloading = true);
+    try {
+      final repo = ref.read(postRepositoryProvider);
+
+      // Gọi hàm repository đã tạo ở bước trên
+      final filePath = await repo.downloadTranscript(postId, format);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tải xong: $format'),
+            action: SnackBarAction(
+              label: 'Mở',
+              onPressed: () => OpenFilex.open(filePath),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi tải file: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isDownloading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final postAsync = ref.watch(postDetailProvider(widget.postId));
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
-
-    // Mock WebView opening
-    void openFullText() {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.detailFullScreen)),
-      );
-    }
 
     return Scaffold(
       body: postAsync.when(
         data: (post) {
-          if (post == null) {
-            return Scaffold(
-              appBar: AppBar(),
-              body: const Center(child: Text('Post not found')),
-            );
-          }
+          if (!_isEditing) _populateControllers(post);
 
           return CustomScrollView(
             slivers: [
               SliverAppBar(
-                expandedHeight: 300,
+                expandedHeight: 250,
                 pinned: true,
                 flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    post.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      shadows: [Shadow(color: Colors.black, blurRadius: 4)],
-                    ),
-                  ),
+                  titlePadding: const EdgeInsets.only(
+                      left: 16, bottom: 16, right: 100), // Né nút Action
+                  title: _isEditing
+                      ? null // Ẩn title trên Appbar khi edit để user sửa ở dưới body
+                      : Text(
+                          post.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            shadows: [
+                              Shadow(color: Colors.black, blurRadius: 4)
+                            ],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                   background: post.thumbnailUrl != null
                       ? Image.network(
                           post.thumbnailUrl!,
@@ -65,21 +173,67 @@ class DetailScreen extends ConsumerWidget {
                       : Container(color: theme.colorScheme.primary),
                 ),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.detailEdit)),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      // Mock delete
-                      context.pop();
-                    },
-                  ),
+                  if (_isEditing) ...[
+                    IconButton(
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : const Icon(Icons.save),
+                      onPressed: _isSaving ? null : () => _saveChanges(post),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() => _isEditing = false),
+                    )
+                  ] else ...[
+                    if (_isDownloading)
+                      const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2)),
+                      )
+                    else
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.download),
+                        tooltip: "Tải xuống Transcript",
+                        onSelected: (format) =>
+                            _handleDownload(post.id, format),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'word',
+                            child: Row(
+                              children: [
+                                Icon(Icons.description, color: Colors.blue),
+                                SizedBox(width: 8),
+                                Text('Tải file Word (.docx)'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'pdf',
+                            child: Row(
+                              children: [
+                                Icon(Icons.picture_as_pdf, color: Colors.red),
+                                SizedBox(width: 8),
+                                Text('Tải file PDF (.pdf)'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        setState(() => _isEditing = true);
+                      },
+                    ),
+                  ],
                 ],
               ),
               SliverToBoxAdapter(
@@ -88,94 +242,104 @@ class DetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Mood & Date
-                      Row(
-                        children: [
-                          MoodChip(mood: post.mood),
-                          const SizedBox(width: 12),
-                          Text(
-                            '${l10n.detailRecorded} ${post.recordDate?.day}/${post.recordDate?.month}/${post.recordDate?.year}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
+                      // --- SECTION 1: TITLE & MOOD ---
+                      if (_isEditing) ...[
+                        TextField(
+                          controller: _titleController,
+                          decoration:
+                              const InputDecoration(labelText: 'Tiêu đề'),
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                        const Gap(16),
+                        const Text("Cảm xúc:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Gap(8),
+                        Wrap(
+                          spacing: 8,
+                          children: Mood.values
+                              .map((m) => ChoiceChip(
+                                    label: Text(m.label),
+                                    selected: _selectedMood == m,
+                                    onSelected: (val) =>
+                                        setState(() => _selectedMood = m),
+                                  ))
+                              .toList(),
+                        )
+                      ] else ...[
+                        Row(
+                          children: [
+                            MoodChip(mood: post.mood),
+                            const Gap(12),
+                            Text(
+                              '${l10n.detailRecorded} ${post.uploadDate.day}/${post.uploadDate.month}/${post.uploadDate.year}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ),
+                      ],
 
-                      // Audio Player
+                      const Gap(24),
+
                       Text(l10n.detailRecording,
                           style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
+                      const Gap(8),
                       QuickAudioPlayer(
                         duration: post.duration,
                         audioUrl: post.streamUrl,
                       ),
-                      const SizedBox(height: 24),
 
-                      // Hashtags
-                      Wrap(
-                        spacing: 8,
-                        children: post.hashtags
-                            .map((tag) => Chip(
-                                  label: Text(tag,
-                                      style: TextStyle(
-                                          color: theme.colorScheme.primary)),
-                                  backgroundColor: theme
-                                      .colorScheme.primaryContainer
-                                      .withOpacity(0.3),
-                                ))
-                            .toList(),
-                      ),
-                      const SizedBox(height: 24),
+                      const Gap(24),
 
-                      // Text Content
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(l10n.detailJournal,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                          TextButton(
-                              onPressed: openFullText,
-                              child: Text(l10n.detailFullScreen)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        post.textContent ?? 'No content.',
-                        style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Photos
-                      if (post.attachedImageUrls.isNotEmpty) ...[
-                        Text(l10n.detailPhotos,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 18)),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 120,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: post.attachedImageUrls.length,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                margin: const EdgeInsets.only(right: 12),
-                                width: 120,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                  image: DecorationImage(
-                                    image: NetworkImage(
-                                        post.attachedImageUrls[index]),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                      if (_isEditing)
+                        TextField(
+                          controller: _hashtagsController,
+                          decoration: const InputDecoration(
+                              labelText:
+                                  'Hashtags (cách nhau bởi khoảng trắng)'),
+                        )
+                      else
+                        Wrap(
+                          spacing: 8,
+                          children: post.hashtags
+                              .map((tag) => Chip(
+                                    label: Text(tag,
+                                        style: TextStyle(
+                                            color: theme.colorScheme.primary)),
+                                    backgroundColor: theme
+                                        .colorScheme.primaryContainer
+                                        .withOpacity(0.3),
+                                  ))
+                              .toList(),
                         ),
-                        const SizedBox(height: 40),
-                      ],
+
+                      const Gap(24),
+
+                      // --- SECTION 4: TRANSCRIPT / CONTENT ---
+                      Text(l10n.detailJournal,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 18)),
+                      const Gap(8),
+
+                      if (_isEditing)
+                        TextField(
+                          controller: _contentController,
+                          maxLines: null, // Cho phép xuống dòng thoải mái
+                          decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: "Nội dung bài viết..."),
+                          style:
+                              theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+                        )
+                      else
+                        SelectableText(
+                          // Dùng SelectableText để user có thể copy
+                          post.textContent ?? 'Chưa có nội dung.',
+                          style:
+                              theme.textTheme.bodyLarge?.copyWith(height: 1.6),
+                        ),
+
+                      const Gap(40),
                     ],
                   ),
                 ),
@@ -183,10 +347,8 @@ class DetailScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () =>
-            const Scaffold(body: Center(child: CircularProgressIndicator())),
-        error: (err, stack) =>
-            Scaffold(body: Center(child: Text('Error: $err'))),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Lỗi tải dữ liệu: $err')),
       ),
     );
   }

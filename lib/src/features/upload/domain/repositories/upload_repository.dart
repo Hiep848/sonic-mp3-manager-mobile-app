@@ -12,4 +12,6 @@ abstract class UploadRepository {
 
   Future<void> confirmUpload(
       String jobId, String fileName, double duration, int fileSize);
+
+  Future<void> cancelJob(String jobId);
 }

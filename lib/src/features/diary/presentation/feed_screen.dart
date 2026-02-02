@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../upload/domain/models/upload_state.dart';
 import '../../upload/presentation/controllers/upload_controller.dart';
+import '../domain/models/post_model.dart';
 import 'controllers/feed_controller.dart';
 import 'widgets/audio_post_card.dart';
-import 'widgets/uploading_post_card.dart';
 
 class FeedScreen extends ConsumerWidget {
   const FeedScreen({super.key});
@@ -90,8 +90,26 @@ class FeedScreen extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   if (isUploading) {
                     if (index == 0) {
-                      return UploadingPostCard(
+                      final dummyPost = AudioPost(
+                        id: "uploading_temp",
+                        title: "Đang tải lên...",
+                        duration: 0,
+                        fileSize: 0,
+                        uploadDate: DateTime.now(),
+                        hashtags: [],
+                        textContent: null,
+                        thumbnailUrl: null,
+                        streamUrl: null,
+                      );
+
+                      return AudioPostCard(
+                        post: dummyPost,
                         uploadState: uploadState,
+                        onCancel: () {
+                          ref
+                              .read(uploadControllerProvider.notifier)
+                              .cancelUpload();
+                        },
                       );
                     }
                     index -= 1;

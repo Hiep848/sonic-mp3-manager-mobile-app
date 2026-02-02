@@ -6,6 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/datasources/upload_remote_datasource.dart';
+import '../../data/repositories/upload_repository_impl.dart';
 import '../../domain/models/upload_state.dart';
 
 part 'upload_controller.g.dart';
@@ -57,12 +58,16 @@ class UploadController extends _$UploadController {
         fileSize,
       );
       state = state.copyWith(stage: UploadStage.processing, progress: 0.0);
-
       final sseStream = dataSource.listenToProcessingProgress(currentJobId);
-
       await for (final event in sseStream) {
         final status = event['status'];
-        final progressVal = (event['progress'] as num?)?.toDouble() ?? 0;
+        dynamic progressRaw = event['progress'];
+        double progressVal = 0.0;
+        if (progressRaw is num) {
+          progressVal = progressRaw.toDouble();
+        } else if (progressRaw is String) {
+          progressVal = double.tryParse(progressRaw) ?? 0.0;
+        }
         final progress = progressVal > 1 ? progressVal / 100.0 : progressVal;
         if (status == 'COMPLETED') {
           state = state.copyWith(stage: UploadStage.completed, progress: 1.0);
@@ -70,7 +75,8 @@ class UploadController extends _$UploadController {
         } else if (status == 'FAILED' || status == 'CANCELLED') {
           throw Exception(event['message'] ?? 'Xử lý thất bại');
         } else {
-          state = state.copyWith(progress: progress);
+          state =
+              state.copyWith(stage: UploadStage.processing, progress: progress);
         }
       }
 
@@ -94,9 +100,21 @@ class UploadController extends _$UploadController {
     }
   }
 
-  void cancelUpload() {
+  Future<void> cancelUpload() async {
+    final currentStage = state.stage;
+    final currentJobId = state.jobId;
     if (_cancelToken != null && !_cancelToken!.isCancelled) {
       _cancelToken!.cancel("User cancelled");
+    }
+    if (currentJobId != null &&
+        (currentStage == UploadStage.confirming ||
+            currentStage == UploadStage.processing)) {
+      try {
+        final repo = ref.read(uploadRepositoryProvider);
+        await repo.cancelJob(currentJobId);
+      } catch (e) {
+        print("Backend cancel failed: $e");
+      }
     }
     state = const UploadState(stage: UploadStage.idle);
   }
