@@ -1,4 +1,4 @@
-import 'package:mp3_management/src/features/diary/domain/models/user_model.dart';
+import '../domain/models/user_model.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'mock_user_repository.g.dart';

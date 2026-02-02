@@ -1,5 +1,5 @@
-import 'package:mp3_management/src/features/diary/domain/models/post_model.dart';
-import 'package:mp3_management/src/features/diary/domain/models/mood.dart';
+import '../domain/models/post_model.dart';
+import '../domain/models/mood.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'mock_post_repository.g.dart';

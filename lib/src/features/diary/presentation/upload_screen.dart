@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mp3_management/src/features/diary/domain/models/mood.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/image_picker_grid.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/mood_chip.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/upload_progress_widget.dart';
+import '../domain/models/mood.dart';
+import 'widgets/image_picker_grid.dart';
+import 'widgets/mood_chip.dart';
+import 'widgets/upload_progress_widget.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
@@ -108,7 +108,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
             // Album Dropdown
             DropdownButtonFormField<String>(
-              value: _selectedAlbum,
+              initialValue: _selectedAlbum,
               decoration: InputDecoration(labelText: l10n.uploadAlbumLabel),
               items: [
                 const DropdownMenuItem(

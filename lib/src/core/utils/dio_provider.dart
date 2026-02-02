@@ -21,7 +21,6 @@ Dio dio(Ref ref) {
 
   final dio = Dio(options);
 
-  // Thêm Log để dễ debug (Thấy request/response trong console)
   dio.interceptors.add(LogInterceptor(
     requestBody: true,
     responseBody: true,

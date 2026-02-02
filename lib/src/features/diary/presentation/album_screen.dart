@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mp3_management/src/features/diary/data/mock_album_repository.dart';
-import 'package:mp3_management/src/features/diary/domain/models/album_model.dart';
-import 'package:go_router/go_router.dart';
+import '../data/mock_album_repository.dart';
+import '../domain/models/album_model.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
@@ -65,7 +64,7 @@ class AlbumScreen extends ConsumerWidget {
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceVariant,
+                            color: theme.colorScheme.surfaceContainerHighest,
                             borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(16)),
                             image: album.coverUrl != null

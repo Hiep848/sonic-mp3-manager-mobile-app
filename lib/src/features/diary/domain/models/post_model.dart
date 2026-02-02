@@ -1,5 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:mp3_management/src/features/diary/domain/models/mood.dart';
+import 'mood.dart';
 
 part 'post_model.freezed.dart';
 part 'post_model.g.dart';

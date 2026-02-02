@@ -23,7 +23,7 @@ class AppTheme {
       tertiary: accentColor,
       error: errorColor,
       surface: surfaceColor,
-      surfaceVariant: Color(0xFFE0F2F1), // Very light teal for containers
+      surfaceVariant: const Color(0xFFE0F2F1), // Very light teal for containers
       onPrimary: Colors.white,
       onSecondary: Colors.white,
       onSurface: Colors.black87,

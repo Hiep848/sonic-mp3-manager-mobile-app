@@ -112,7 +112,7 @@ class ProfileScreen extends HookConsumerWidget {
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) =>
-            Center(child: Text('${l10n.commonError(err.toString())}')),
+            Center(child: Text(l10n.commonError(err.toString()))),
       ),
     );
   }
@@ -135,7 +135,7 @@ class ProfileScreen extends HookConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(

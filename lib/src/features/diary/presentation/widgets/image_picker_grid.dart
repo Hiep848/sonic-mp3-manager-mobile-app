@@ -29,7 +29,7 @@ class ImagePickerGrid extends StatelessWidget {
             onTap: onAdd,
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.outline.withOpacity(0.5),

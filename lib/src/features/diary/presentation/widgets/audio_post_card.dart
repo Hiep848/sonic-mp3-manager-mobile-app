@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mp3_management/src/features/diary/domain/models/post_model.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/mood_chip.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/quick_audio_player.dart';
+import '../../domain/models/post_model.dart';
+import 'mood_chip.dart';
+import 'quick_audio_player.dart';
 
 class AudioPostCard extends StatelessWidget {
   final AudioPost post;

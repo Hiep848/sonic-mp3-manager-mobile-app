@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mp3_management/src/features/diary/data/mock_post_repository.dart';
-import 'package:mp3_management/src/features/diary/domain/models/post_model.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/mood_chip.dart';
-import 'package:mp3_management/src/features/diary/presentation/widgets/quick_audio_player.dart';
+import '../data/mock_post_repository.dart';
+import '../domain/models/post_model.dart';
+import 'widgets/mood_chip.dart';
+import 'widgets/quick_audio_player.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
