@@ -19,16 +19,9 @@ class UploadFileUseCase {
   final UploadRepository _repository;
 
   UploadFileUseCase(this._repository);
-
-  /// Trả về một Stream tiến độ từ 0.0 đến 1.0
   Stream<double> call(File file, CancelToken cancelToken) {
-    // 1. Tạo StreamController để điều khiển dòng dữ liệu
     final controller = StreamController<double>();
-
-    // 2. Thực hiện logic trong background
     _executeUploadFlow(controller, file, cancelToken);
-
-    // 3. Trả về stream ngay lập tức cho UI lắng nghe
     return controller.stream;
   }
 
@@ -38,24 +31,15 @@ class UploadFileUseCase {
     CancelToken cancelToken,
   ) async {
     try {
-      // Bắt đầu
       controller.add(0.0);
-
-      // --- BƯỚC 1: Init Upload ---
       final fileName = file.path.split('/').last;
       final initResponse = await _repository.initUpload(fileName);
-
       if (cancelToken.isCancelled) throw cancelToken.cancelError!;
-
-      // --- BƯỚC 2: Upload to S3 ---
-      // Tiến trình upload chiếm 95% tổng quá trình
       await _repository.uploadFile(
-        initResponse
-            .uploadUrl, // [Lưu ý] Đảm bảo field này khớp với InitUploadResponse (uploadUrl)
+        initResponse.uploadUrl,
         file,
         cancelToken,
         (progress) {
-          // Callback cập nhật tiến độ vào stream
           if (!controller.isClosed && !cancelToken.isCancelled) {
             controller.add(progress * 0.95);
           }
@@ -63,13 +47,9 @@ class UploadFileUseCase {
       );
 
       if (cancelToken.isCancelled) throw cancelToken.cancelError!;
-
-      // --- BƯỚC 3: Confirm Upload ---
-      // Lúc này file đã lên S3, gọi confirm để trigger worker
-      controller.add(0.99); // Gần xong
-      await _repository.confirmUpload(initResponse.jobId);
-
-      // Hoàn tất
+      controller.add(0.99);
+      await _repository.confirmUpload(
+          initResponse.jobId, initResponse.fileName, 0, 0);
       if (!controller.isClosed) {
         controller.add(1.0);
         await controller.close();

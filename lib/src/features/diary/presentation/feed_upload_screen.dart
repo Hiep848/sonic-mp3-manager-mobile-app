@@ -108,7 +108,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
             // Album Dropdown
             DropdownButtonFormField<String>(
-              initialValue: _selectedAlbum,
+              value: _selectedAlbum,
               decoration: InputDecoration(labelText: l10n.uploadAlbumLabel),
               items: [
                 const DropdownMenuItem(

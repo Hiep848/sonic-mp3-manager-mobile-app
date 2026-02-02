@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -26,23 +27,24 @@ class PostRemoteDataSource {
         },
       );
 
-      // Handle 204 No Content or empty body
       if (response.statusCode == 204 || response.data == null) {
         return [];
       }
-
-      // Handle case where response.data might be a String (empty string from some servers)
       if (response.data is String && (response.data as String).isEmpty) {
         return [];
       }
 
-      // Check if data is actually a List before casting
       if (response.data is List) {
-        return (response.data as List)
-            .map((e) => AudioPost.fromJson(e))
-            .toList();
+        return (response.data as List).map((e) {
+          try {
+            return AudioPost.fromJson(e);
+          } catch (err) {
+            print("Error parsing post: $err");
+            print("Problematic JSON: $e");
+            rethrow;
+          }
+        }).toList();
       } else {
-        // If it's not a list (e.g. a Map or String error), log and return empty or throw
         print("Unexpected response format: ${response.data.runtimeType}");
         return [];
       }
@@ -50,6 +52,40 @@ class PostRemoteDataSource {
       print("Error: $e, at \n $stackTrace");
       rethrow;
     }
+  }
+
+  Future<AudioPost> getPostById(String id) async {
+    final response = await _dio.get('/posts/$id');
+    return AudioPost.fromJson(response.data);
+  }
+
+  Future<void> updatePost(String id, AudioPost updatedPost) async {
+    await _dio.put(
+      '/posts/$id',
+      data: {
+        'title': updatedPost.title,
+        'text_content': updatedPost.textContent,
+        'mood': updatedPost.mood?.name,
+        'hashtags': updatedPost.hashtags,
+      },
+    );
+  }
+
+  Future<String> downloadTranscript(String postId, String format) async {
+    final endpoint = '/media/$postId/export/$format';
+    final directory = await getApplicationDocumentsDirectory();
+    final extension = format == 'word' ? 'docx' : 'pdf';
+    final savePath = '${directory.path}/transcript_$postId.$extension';
+    await _dio.download(
+      endpoint,
+      savePath,
+      onReceiveProgress: (received, total) {
+        if (total != -1) {
+          print('Downloading: ${(received / total * 100).toStringAsFixed(0)}%');
+        }
+      },
+    );
+    return savePath;
   }
 }
 
