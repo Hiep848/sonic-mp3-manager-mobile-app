@@ -294,9 +294,6 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                       if (_isEditing)
                         TextField(
                           controller: _hashtagsController,
-                          decoration: const InputDecoration(
-                              labelText:
-                                  'Hashtags (cách nhau bởi khoảng trắng)'),
                         )
                       else
                         Wrap(
