@@ -26,10 +26,15 @@ class PostRemoteDataSource {
         },
       );
 
-      return (response.data as List)
-          .map((e) =>
-              AudioPost.fromJson(e)) // Đảm bảo AudioPost có factory fromJson
-          .toList();
+      if (response.statusCode == 204) {
+        return [];
+      }
+
+      final data = response.data;
+      if (data is List) {
+        return data.map((e) => AudioPost.fromJson(e)).toList();
+      }
+      return [];
     } catch (e) {
       rethrow;
     }

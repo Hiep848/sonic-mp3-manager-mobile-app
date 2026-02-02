@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -18,6 +19,7 @@ class AlbumRemoteDataSource {
 
   Future<List<Album>> getMyAlbums() async {
     final response = await _dio.get(ApiEndpoints.myAlbums);
+    print('My Albums Raw Response: ${response.data}');
     final List data = response.data;
     return data.map((e) => Album.fromJson(e)).toList();
   }
@@ -83,6 +85,6 @@ class AlbumRemoteDataSource {
 }
 
 @riverpod
-AlbumRemoteDataSource albumRemoteDataSource(AlbumRemoteDataSourceRef ref) {
+AlbumRemoteDataSource albumRemoteDataSource(Ref ref) {
   return AlbumRemoteDataSource(ref.watch(dioProvider));
 }
