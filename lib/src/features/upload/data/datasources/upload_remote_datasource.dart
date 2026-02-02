@@ -1,11 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import '../../../../core/constants/api_endpoints.dart';
+
 import '../../../../core/utils/dio_provider.dart';
 
 part 'upload_remote_datasource.g.dart';
 
-// Provider definition
 @riverpod
 UploadRemoteDataSource uploadRemoteDataSource(UploadRemoteDataSourceRef ref) {
   return UploadRemoteDataSourceImpl(ref.watch(dioProvider));
@@ -13,9 +12,9 @@ UploadRemoteDataSource uploadRemoteDataSource(UploadRemoteDataSourceRef ref) {
 
 class InitUploadResponse {
   final String jobId;
-  final String presignedUrl;
+  final String uploadUrl; // [FIX] Đổi tên cho khớp backend
 
-  InitUploadResponse({required this.jobId, required this.presignedUrl});
+  InitUploadResponse({required this.jobId, required this.uploadUrl});
 }
 
 abstract class UploadRemoteDataSource {
@@ -42,7 +41,7 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
   Future<InitUploadResponse> initUpload(
       String fileName, String contentType) async {
     final response = await _dio.post(
-      ApiEndpoints.uploadInit,
+      '/upload/init', // [FIX] Sử dụng đường dẫn tương đối nếu baseUrl đã cấu hình
       data: {
         'filename': fileName,
         'content_type': contentType,
@@ -50,7 +49,8 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
     );
     return InitUploadResponse(
       jobId: response.data['job_id'],
-      presignedUrl: response.data['presigned_url'],
+      // [FIX] Backend trả về 'upload_url', không phải 'presigned_url'
+      uploadUrl: response.data['upload_url'],
     );
   }
 
@@ -63,7 +63,7 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
     CancelToken? cancelToken,
     required Function(int, int)? onSendProgress,
   }) async {
-    // USE A FRESH DIO for S3 upload to avoid default BaseURL/Headers interfering
+    // [QUAN TRỌNG] Dùng instance Dio mới hoàn toàn để tránh dính Header Auth của App
     final s3Dio = Dio();
 
     await s3Dio.put(
@@ -73,8 +73,8 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
       onSendProgress: onSendProgress,
       options: Options(
         headers: {
-          'Content-Length': length,
-          'Content-Type': contentType,
+          Headers.contentLengthHeader: length, // Bắt buộc với S3 PUT
+          Headers.contentTypeHeader: contentType,
         },
       ),
     );
@@ -82,6 +82,6 @@ class UploadRemoteDataSourceImpl implements UploadRemoteDataSource {
 
   @override
   Future<void> confirmUpload(String jobId) async {
-    await _dio.post(ApiEndpoints.uploadConfirm(jobId));
+    await _dio.post('/upload/$jobId/confirm');
   }
 }
