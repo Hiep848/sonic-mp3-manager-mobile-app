@@ -26,11 +26,28 @@ class PostRemoteDataSource {
         },
       );
 
-      return (response.data as List)
-          .map((e) =>
-              AudioPost.fromJson(e)) // Đảm bảo AudioPost có factory fromJson
-          .toList();
-    } catch (e) {
+      // Handle 204 No Content or empty body
+      if (response.statusCode == 204 || response.data == null) {
+        return [];
+      }
+
+      // Handle case where response.data might be a String (empty string from some servers)
+      if (response.data is String && (response.data as String).isEmpty) {
+        return [];
+      }
+
+      // Check if data is actually a List before casting
+      if (response.data is List) {
+        return (response.data as List)
+            .map((e) => AudioPost.fromJson(e))
+            .toList();
+      } else {
+        // If it's not a list (e.g. a Map or String error), log and return empty or throw
+        print("Unexpected response format: ${response.data.runtimeType}");
+        return [];
+      }
+    } catch (e, stackTrace) {
+      print("Error: $e, at \n $stackTrace");
       rethrow;
     }
   }

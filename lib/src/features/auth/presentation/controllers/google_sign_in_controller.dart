@@ -44,6 +44,7 @@ class GoogleSignInController extends _$GoogleSignInController {
     _initializationCompleter = Completer<void>();
     try {
       final googleSignIn = ref.read(googleSignInProvider);
+      print("Server Client ID: $_serverClientId");
       await googleSignIn.initialize(
         serverClientId: _serverClientId,
         nonce: "123",
@@ -70,7 +71,7 @@ class GoogleSignInController extends _$GoogleSignInController {
     final googleSignIn = ref.read(googleSignInProvider);
     try {
       final GoogleSignInAccount googleUser =
-          await googleSignIn.authenticate(scopeHint: ['email']);
+          await googleSignIn.authenticate(scopeHint: _scopes);
       print('Google Sign-In successful: ${googleUser.email}');
       final GoogleSignInServerAuthorization? authorization =
           await googleUser.authorizationClient.authorizeServer(_scopes);

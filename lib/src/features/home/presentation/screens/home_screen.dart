@@ -7,7 +7,7 @@ import '../../../../core/utils/app_toast.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import '../../../diary/presentation/feed_screen.dart';
 import '../../../diary/presentation/profile_screen.dart';
-import '../../../album/presentation/album_screen.dart';
+import '../../../diary/presentation/album_screen.dart';
 
 class HomeScreen extends HookConsumerWidget {
   const HomeScreen({super.key});
