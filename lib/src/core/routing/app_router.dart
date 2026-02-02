@@ -7,6 +7,7 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/upload/presentation/screens/upload_screen.dart';
 import '../../features/diary/presentation/detail_screen.dart';
 import '../../features/diary/presentation/search_screen.dart';
+import '../../features/album/presentation/album_detail_screen.dart';
 import '../app_startup/app_startup_provider.dart';
 
 part 'app_router.g.dart';
@@ -65,6 +66,14 @@ GoRouter goRouter(GoRouterRef ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return DetailScreen(postId: id);
+        },
+      ),
+      GoRoute(
+        path: '/album/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          final name = state.extra as String? ?? 'Album';
+          return AlbumDetailScreen(albumId: id, albumName: name);
         },
       ),
     ],

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../domain/models/album_model.dart';
 import 'controllers/my_albums_controller.dart';
+import 'widgets/create_album_dialog.dart';
 
 class AlbumScreen extends ConsumerWidget {
   const AlbumScreen({super.key});
@@ -18,7 +19,15 @@ class AlbumScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.albumTitle),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const CreateAlbumDialog(),
+              );
+            },
+            icon: const Icon(Icons.add),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -48,10 +57,7 @@ class AlbumScreen extends ConsumerWidget {
                 final album = albums[index];
                 return GestureDetector(
                   onTap: () {
-                    // Navigate to album detail
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Opening ${album.name}...')),
-                    );
+                    context.push('/album/${album.id}', extra: album.name);
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -59,7 +65,7 @@ class AlbumScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -122,7 +128,37 @@ class AlbumScreen extends ConsumerWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
+          error: (err, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 48, color: theme.colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.commonError(err),
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  err.toString(), // Detailed error for debugging
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () =>
+                      ref.read(myAlbumsControllerProvider.notifier).refresh(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
