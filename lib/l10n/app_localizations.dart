@@ -391,6 +391,456 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading...'**
   String get commonLoading;
+
+  /// No description provided for @authWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back'**
+  String get authWelcome;
+
+  /// No description provided for @authLoginTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Login Error'**
+  String get authLoginTitle;
+
+  /// No description provided for @authLoginSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back!'**
+  String get authLoginSuccess;
+
+  /// No description provided for @authEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authEmail;
+
+  /// No description provided for @authPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get authPassword;
+
+  /// No description provided for @authLoginButton.
+  ///
+  /// In en, this message translates to:
+  /// **'LOGIN'**
+  String get authLoginButton;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? Sign Up'**
+  String get authNoAccount;
+
+  /// No description provided for @authEnterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter Email'**
+  String get authEnterEmail;
+
+  /// No description provided for @authInvalidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid Email'**
+  String get authInvalidEmail;
+
+  /// No description provided for @authEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter password'**
+  String get authEnterPassword;
+
+  /// No description provided for @authShortPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get authShortPassword;
+
+  /// No description provided for @authRegisterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get authRegisterTitle;
+
+  /// No description provided for @authFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get authFullName;
+
+  /// No description provided for @authConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get authConfirmPassword;
+
+  /// No description provided for @authSignUpButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN UP'**
+  String get authSignUpButton;
+
+  /// No description provided for @authHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? Login'**
+  String get authHaveAccount;
+
+  /// No description provided for @authRegisterSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Account created! Please login.'**
+  String get authRegisterSuccess;
+
+  /// No description provided for @authEnterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name'**
+  String get authEnterName;
+
+  /// No description provided for @authConfirmPassEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get authConfirmPassEmpty;
+
+  /// No description provided for @authPassMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get authPassMismatch;
+
+  /// No description provided for @authRegisterError.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration Error'**
+  String get authRegisterError;
+
+  /// No description provided for @authCreatingAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating account...'**
+  String get authCreatingAccount;
+
+  /// No description provided for @authLoggingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging in...'**
+  String get authLoggingIn;
+
+  /// No description provided for @socialOrContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Or continue with'**
+  String get socialOrContinue;
+
+  /// No description provided for @socialGoogleError.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Error'**
+  String get socialGoogleError;
+
+  /// No description provided for @socialAuthCodeError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot get Auth Code. Check Console config.'**
+  String get socialAuthCodeError;
+
+  /// No description provided for @socialSignInInit.
+  ///
+  /// In en, this message translates to:
+  /// **'Initializing Google Sign-In...'**
+  String get socialSignInInit;
+
+  /// No description provided for @socialFeatureDev.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature in development'**
+  String get socialFeatureDev;
+
+  /// No description provided for @uploadScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload MP3'**
+  String get uploadScreenTitle;
+
+  /// No description provided for @uploadInBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading in background...'**
+  String get uploadInBackground;
+
+  /// No description provided for @uploadNoFileSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'No file selected'**
+  String get uploadNoFileSelected;
+
+  /// No description provided for @uploadButtonPick.
+  ///
+  /// In en, this message translates to:
+  /// **'PICK MP3 FILE'**
+  String get uploadButtonPick;
+
+  /// No description provided for @uploadButtonStart.
+  ///
+  /// In en, this message translates to:
+  /// **'START UPLOAD'**
+  String get uploadButtonStart;
+
+  /// No description provided for @uploadButtonChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another file'**
+  String get uploadButtonChange;
+
+  /// No description provided for @albumNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No albums found'**
+  String get albumNoData;
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get commonRetry;
+
+  /// No description provided for @albumCreateNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New Album'**
+  String get albumCreateNew;
+
+  /// No description provided for @albumNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter album name'**
+  String get albumNameHint;
+
+  /// No description provided for @albumCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get albumCreateButton;
+
+  /// No description provided for @feedSortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get feedSortNewest;
+
+  /// No description provided for @feedSortPopular.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Popular'**
+  String get feedSortPopular;
+
+  /// No description provided for @feedNoPosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet'**
+  String get feedNoPosts;
+
+  /// No description provided for @feedUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading...'**
+  String get feedUploading;
+
+  /// No description provided for @commonErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred: {error}'**
+  String commonErrorUnknown(Object error);
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get commonCancel;
+
+  /// No description provided for @commonDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get commonDelete;
+
+  /// No description provided for @commonSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get commonSave;
+
+  /// No description provided for @commonOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get commonOpen;
+
+  /// No description provided for @albumRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Album'**
+  String get albumRename;
+
+  /// No description provided for @albumDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Album'**
+  String get albumDelete;
+
+  /// No description provided for @albumDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Album'**
+  String get albumDeleteTitle;
+
+  /// No description provided for @albumDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this album?'**
+  String get albumDeleteConfirm;
+
+  /// No description provided for @albumDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete: {error}'**
+  String albumDeleteFailed(Object error);
+
+  /// No description provided for @albumDeleteSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete album successfully'**
+  String get albumDeleteSuccess;
+
+  /// No description provided for @albumRenameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename Album'**
+  String get albumRenameTitle;
+
+  /// No description provided for @albumRenameFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to rename: {error}'**
+  String albumRenameFailed(Object error);
+
+  /// No description provided for @albumRenameSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename album successfully'**
+  String get albumRenameSuccess;
+
+  /// No description provided for @albumNoTracks.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracks in this album'**
+  String get albumNoTracks;
+
+  /// No description provided for @albumUnknownArtist.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Artist'**
+  String get albumUnknownArtist;
+
+  /// No description provided for @albumAddMp3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Add MP3 to Album'**
+  String get albumAddMp3Title;
+
+  /// No description provided for @albumNoMp3s.
+  ///
+  /// In en, this message translates to:
+  /// **'No MP3s found'**
+  String get albumNoMp3s;
+
+  /// No description provided for @albumNoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description'**
+  String get albumNoDescription;
+
+  /// No description provided for @albumAddSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Added \"{title}\" to album'**
+  String albumAddSuccess(Object title);
+
+  /// No description provided for @albumAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to add: {error}'**
+  String albumAddFailed(Object error);
+
+  /// No description provided for @detailSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Changes saved!'**
+  String get detailSaveSuccess;
+
+  /// No description provided for @detailDownloadSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Download complete: {format}'**
+  String detailDownloadSuccess(Object format);
+
+  /// No description provided for @detailDownloadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Download error: {error}'**
+  String detailDownloadError(Object error);
+
+  /// No description provided for @detailDownloadTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Transcript'**
+  String get detailDownloadTooltip;
+
+  /// No description provided for @detailDownloadWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Word (.docx)'**
+  String get detailDownloadWord;
+
+  /// No description provided for @detailDownloadPdf.
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF (.pdf)'**
+  String get detailDownloadPdf;
+
+  /// No description provided for @detailEditTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get detailEditTitle;
+
+  /// No description provided for @detailEditMood.
+  ///
+  /// In en, this message translates to:
+  /// **'Mood:'**
+  String get detailEditMood;
+
+  /// No description provided for @detailEditContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Content...'**
+  String get detailEditContentHint;
+
+  /// No description provided for @detailNoContent.
+  ///
+  /// In en, this message translates to:
+  /// **'No content.'**
+  String get detailNoContent;
+
+  /// No description provided for @featureInDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature under development'**
+  String get featureInDevelopment;
 }
 
 class _AppLocalizationsDelegate

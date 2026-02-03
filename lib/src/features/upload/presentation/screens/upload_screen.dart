@@ -7,6 +7,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/app_toast.dart';
 import '../../../../core/widgets/primary_button.dart';
@@ -33,7 +34,8 @@ class UploadScreen extends HookConsumerWidget {
       // 2. Nếu bắt đầu upload -> Đóng màn hình ngay (để hiện progress ở Feed)
       else if (next.stage == UploadStage.uploading &&
           previous?.stage == UploadStage.idle) {
-        AppToast.showInfo(context, "Đang tải lên trong nền...");
+        AppToast.showInfo(
+            context, AppLocalizations.of(context)!.uploadInBackground);
         context.pop(); // Quay về Feed
       }
     });
@@ -51,7 +53,8 @@ class UploadScreen extends HookConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload MP3')),
+      appBar:
+          AppBar(title: Text(AppLocalizations.of(context)!.uploadScreenTitle)),
       body: Padding(
         padding: const EdgeInsets.all(AppSizes.p24),
         child: Column(
@@ -69,7 +72,7 @@ class UploadScreen extends HookConsumerWidget {
                   const Gap(AppSizes.p8),
                   Text(
                     selectedFile.value == null
-                        ? 'Chưa chọn file nào'
+                        ? AppLocalizations.of(context)!.uploadNoFileSelected
                         : fileName.value,
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -80,12 +83,12 @@ class UploadScreen extends HookConsumerWidget {
             const Gap(AppSizes.p24),
             if (selectedFile.value == null)
               PrimaryButton(
-                text: 'CHỌN FILE MP3',
+                text: AppLocalizations.of(context)!.uploadButtonPick,
                 onPressed: pickFile,
               )
             else
               PrimaryButton(
-                text: 'BẮT ĐẦU UPLOAD',
+                text: AppLocalizations.of(context)!.uploadButtonStart,
                 isLoading: uploadState.stage != UploadStage.idle &&
                     uploadState.stage != UploadStage.failed,
                 onPressed: () {
@@ -99,7 +102,7 @@ class UploadScreen extends HookConsumerWidget {
             if (selectedFile.value != null)
               TextButton(
                 onPressed: pickFile,
-                child: const Text('Chọn file khác'),
+                child: Text(AppLocalizations.of(context)!.uploadButtonChange),
               ),
           ],
         ),

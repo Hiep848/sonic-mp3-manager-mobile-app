@@ -9,6 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../../gen/assets.gen.dart';
 import '../../features/auth/presentation/controllers/google_sign_in_controller.dart';
 import '../utils/app_toast.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class SocialLoginButtons extends ConsumerWidget {
   const SocialLoginButtons({super.key});
@@ -20,7 +21,7 @@ class SocialLoginButtons extends ConsumerWidget {
       if (context.mounted) {
         AppToast.showErrorDialog(
           context,
-          title: 'Lỗi Đăng nhập',
+          title: AppLocalizations.of(context)!.authLoginTitle,
           message: e.toString(),
         );
         // ignore: avoid_print
@@ -31,9 +32,8 @@ class SocialLoginButtons extends ConsumerWidget {
       if (context.mounted) {
         AppToast.showErrorDialog(
           context,
-          title: 'Lỗi Google',
-          message:
-              'Không lấy được Auth Code. Vui lòng kiểm tra cấu hình Console.',
+          title: AppLocalizations.of(context)!.socialGoogleError,
+          message: AppLocalizations.of(context)!.socialAuthCodeError,
         );
       }
     } catch (e) {
@@ -51,18 +51,19 @@ class SocialLoginButtons extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final googleInit = ref.watch(googleSignInControllerProvider);
     final isGoogleReady = googleInit is AsyncData<void>;
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       children: [
-        const Row(
+        Row(
           children: [
-            Expanded(child: Divider()),
+            const Expanded(child: Divider()),
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Or continue with',
-                  style: TextStyle(color: Colors.grey)),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(l10n.socialOrContinue,
+                  style: const TextStyle(color: Colors.grey)),
             ),
-            Expanded(child: Divider()),
+            const Expanded(child: Divider()),
           ],
         ),
         const Gap(24),
@@ -83,8 +84,7 @@ class SocialLoginButtons extends ConsumerWidget {
                     ? () => _handleGoogleLogin(context, ref)
                     : () {
                         if (context.mounted) {
-                          AppToast.showInfo(
-                              context, 'Google Sign-In đang khởi tạo...');
+                          AppToast.showInfo(context, l10n.socialSignInInit);
                         }
                       },
               ),
@@ -102,7 +102,7 @@ class SocialLoginButtons extends ConsumerWidget {
                 textColor: Colors.blue.shade800,
                 onTap: () {
                   // TODO: Implement Facebook Login later
-                  AppToast.showInfo(context, 'Tính năng đang phát triển');
+                  AppToast.showInfo(context, l10n.socialFeatureDev);
                 },
               ),
             ),

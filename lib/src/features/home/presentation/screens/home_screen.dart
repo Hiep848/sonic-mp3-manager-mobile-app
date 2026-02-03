@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../../../l10n/app_localizations.dart';
 import '../../../../core/utils/app_toast.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
-import '../../../diary/presentation/feed_screen.dart';
-import '../../../diary/presentation/profile_screen.dart';
-import '../../../album/presentation/album_screen.dart';
+import '../../../audio/presentation/audio_player_controller.dart';
+import '../../../audio/presentation/mini_player.dart';
 
 class HomeScreen extends HookConsumerWidget {
-  const HomeScreen({super.key});
+  final StatefulNavigationShell navigationShell;
+
+  const HomeScreen({
+    super.key,
+    required this.navigationShell,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // State management for bottom navigation
-    final currentIndex = useState(0);
     final l10n = AppLocalizations.of(context)!;
+
+    // Check if we should show mini player
+    final audioState = ref.watch(audioPlayerProvider);
+    // Show if not on Home tab (0) AND track exists
+    final showMiniPlayer =
+        navigationShell.currentIndex != 0 && audioState.currentTrack != null;
 
     // Lắng nghe logout state
     ref.listen(authControllerProvider, (previous, next) {
@@ -38,31 +45,21 @@ class HomeScreen extends HookConsumerWidget {
       }
     });
 
-    final screens = [
-      const FeedScreen(),
-      const AlbumScreen(),
-      const ProfileScreen(), // Now Acts as Settings
-    ];
-
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex.value,
-        children: screens,
-      ),
+      body: navigationShell, // The child route (Feed, Album, Profile)
+      bottomSheet: showMiniPlayer ? const MiniPlayer() : null,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          indicatorShape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                  12)), // "Smaller burble" - rect instead of pill
-          // Or user specifically meant the ripple? Material 3 NavigationBar handles this well.
-          // I'll stick to a standard shape but maybe slightly more boxy to reduce "fatness" of the pill if that's the issue.
-          // Actually, standard pill is fine. If they mean the splash radius, NavigationBar doesn't have it exposed easy.
-          // But changing BottomNavigationBar to NavigationBar is the requested move implied by "modern settings".
+          indicatorShape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: NavigationBar(
-          selectedIndex: currentIndex.value,
+          selectedIndex: navigationShell.currentIndex,
           onDestinationSelected: (index) {
-            currentIndex.value = index;
+            navigationShell.goBranch(
+              index,
+              initialLocation: index == navigationShell.currentIndex,
+            );
           },
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
@@ -84,7 +81,7 @@ class HomeScreen extends HookConsumerWidget {
           ],
         ),
       ),
-      floatingActionButton: currentIndex.value == 0
+      floatingActionButton: navigationShell.currentIndex == 0
           ? FloatingActionButton(
               onPressed: () => context.push('/upload'),
               child: const Icon(Icons.add),

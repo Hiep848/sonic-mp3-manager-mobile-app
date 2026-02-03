@@ -87,8 +87,8 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
         _isEditing = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Đã lưu thay đổi!')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(AppLocalizations.of(context)!.detailSaveSuccess)));
       }
     } catch (e) {
       if (mounted) {
@@ -111,9 +111,10 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Tải xong: $format'),
+            content: Text(
+                AppLocalizations.of(context)!.detailDownloadSuccess(format)),
             action: SnackBarAction(
-              label: 'Mở',
+              label: AppLocalizations.of(context)!.commonOpen,
               onPressed: () => OpenFilex.open(filePath),
             ),
           ),
@@ -122,7 +123,9 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi tải file: $e')),
+          SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.detailDownloadError(e))),
         );
       }
     } finally {
@@ -201,27 +204,29 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                     else
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.download),
-                        tooltip: "Tải xuống Transcript",
+                        tooltip: l10n.detailDownloadTooltip,
                         onSelected: (format) =>
                             _handleDownload(post.id, format),
                         itemBuilder: (context) => [
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'word',
                             child: Row(
                               children: [
-                                Icon(Icons.description, color: Colors.blue),
-                                SizedBox(width: 8),
-                                Text('Tải file Word (.docx)'),
+                                const Icon(Icons.description,
+                                    color: Colors.blue),
+                                const SizedBox(width: 8),
+                                Text(l10n.detailDownloadWord),
                               ],
                             ),
                           ),
-                          const PopupMenuItem(
+                          PopupMenuItem(
                             value: 'pdf',
                             child: Row(
                               children: [
-                                Icon(Icons.picture_as_pdf, color: Colors.red),
-                                SizedBox(width: 8),
-                                Text('Tải file PDF (.pdf)'),
+                                const Icon(Icons.picture_as_pdf,
+                                    color: Colors.red),
+                                const SizedBox(width: 8),
+                                Text(l10n.detailDownloadPdf),
                               ],
                             ),
                           ),
@@ -247,12 +252,13 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                         TextField(
                           controller: _titleController,
                           decoration:
-                              const InputDecoration(labelText: 'Tiêu đề'),
+                              InputDecoration(labelText: l10n.detailEditTitle),
                           style: theme.textTheme.headlineSmall,
                         ),
                         const Gap(16),
-                        const Text("Cảm xúc:",
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(l10n.detailEditMood,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         const Gap(8),
                         Wrap(
                           spacing: 8,
@@ -287,6 +293,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                       QuickAudioPlayer(
                         duration: post.duration,
                         audioUrl: post.streamUrl,
+                        post: post,
                       ),
 
                       const Gap(24),
@@ -322,16 +329,16 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
                         TextField(
                           controller: _contentController,
                           maxLines: null, // Cho phép xuống dòng thoải mái
-                          decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: "Nội dung bài viết..."),
+                          decoration: InputDecoration(
+                              border: const OutlineInputBorder(),
+                              hintText: l10n.detailEditContentHint),
                           style:
                               theme.textTheme.bodyLarge?.copyWith(height: 1.6),
                         )
                       else
                         SelectableText(
                           // Dùng SelectableText để user có thể copy
-                          post.textContent ?? 'Chưa có nội dung.',
+                          post.textContent ?? l10n.detailNoContent,
                           style:
                               theme.textTheme.bodyLarge?.copyWith(height: 1.6),
                         ),
@@ -345,7 +352,7 @@ class _DetailScreenState extends ConsumerState<DetailScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Lỗi tải dữ liệu: $err')),
+        error: (err, stack) => Center(child: Text(l10n.commonError(err))),
       ),
     );
   }

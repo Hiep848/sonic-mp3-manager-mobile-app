@@ -232,6 +232,7 @@ class AudioPostCard extends ConsumerWidget {
                 QuickAudioPlayer(
                   duration: post.duration,
                   audioUrl: streamUrl,
+                  post: post,
                   isLight: hasBackground,
                   progress: isProcessing ? currentProgress : null,
                   statusText: statusText,
@@ -266,15 +267,6 @@ class AudioPostCard extends ConsumerWidget {
                             color: colorScheme.onPrimaryContainer,
                             fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      )
-                    else
-                      Text(
-                        '${(post.fileSize / 1024 / 1024).toStringAsFixed(1)} MB',
-                        style: textTheme.labelSmall?.copyWith(
-                          color: hasBackground
-                              ? Colors.white54
-                              : colorScheme.outline,
                         ),
                       ),
                   ],

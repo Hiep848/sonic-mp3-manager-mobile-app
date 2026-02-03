@@ -6,6 +6,7 @@ import '../domain/models/user_model.dart';
 import '../../auth/presentation/controllers/auth_controller.dart';
 import '../../../core/utils/app_toast.dart';
 import '../../../core/utils/locale_provider.dart';
+import '../../../core/theme/theme_provider.dart';
 
 import '../../../../l10n/app_localizations.dart';
 
@@ -26,8 +27,10 @@ class ProfileScreen extends HookConsumerWidget {
     // Auth Controller for Logout
     final authController = ref.read(authControllerProvider.notifier);
 
-    // Theme State (Mock)
-    final isDarkMode = useState(false);
+    // Theme State
+    final themeMode = ref.watch(appThemeModeProvider);
+    final themeNotifier = ref.read(appThemeModeProvider.notifier);
+    final isDarkMode = themeMode == ThemeMode.dark;
 
     // Locale State
     final currentLocale = ref.watch(appLocaleProvider);
@@ -50,8 +53,10 @@ class ProfileScreen extends HookConsumerWidget {
             SwitchListTile(
               title: Text(l10n.settingsThemeDark),
               subtitle: Text(l10n.settingsThemeDarkSub),
-              value: isDarkMode.value,
-              onChanged: (val) => isDarkMode.value = val,
+              value: isDarkMode,
+              onChanged: (val) {
+                themeNotifier.toggleTheme();
+              },
               secondary: const Icon(Icons.dark_mode_outlined),
             ),
 
@@ -81,7 +86,7 @@ class ProfileScreen extends HookConsumerWidget {
               title: Text(l10n.settingsChangePassword),
               subtitle: Text(l10n.settingsChangePasswordSub),
               onTap: () {
-                AppToast.showInfo(context, l10n.detailEdit);
+                AppToast.showInfo(context, l10n.featureInDevelopment);
               },
             ),
 
@@ -135,7 +140,10 @@ class ProfileScreen extends HookConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withOpacity(0.5),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -173,4 +181,4 @@ class ProfileScreen extends HookConsumerWidget {
       ),
     );
   }
-} // End Class
+}
