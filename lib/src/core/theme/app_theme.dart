@@ -97,4 +97,94 @@ class AppTheme {
       showUnselectedLabels: true,
     ),
   );
+
+  // 3. Dark Theme Configuration
+  static final darkTheme = ThemeData(
+    useMaterial3: true,
+    fontFamily: 'Manrope',
+    brightness: Brightness.dark,
+
+    // Color Scheme
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+      primary: const Color(0xFF80CBC4), // Lighter Teal for Dark Mode
+      secondary: const Color(0xFF4DB6AC),
+      tertiary: accentColor,
+      error: const Color(0xFFCF6679),
+      surface: const Color(0xFF1E1E1E),
+      onPrimary: Colors.black, // Dark text on light primary
+      onSecondary: Colors.black,
+      onSurface: Colors.white,
+    ),
+
+    // AppBar Theme
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF1E1E1E), // Dark surface
+      foregroundColor: Colors.white,
+      elevation: 0,
+      centerTitle: false,
+    ),
+
+    // Floating Action Button
+    floatingActionButtonTheme: const FloatingActionButtonThemeData(
+      backgroundColor: Color(0xFF80CBC4),
+      foregroundColor: Colors.black,
+    ),
+
+    // Input Decoration (TextFields)
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF2C2C2C),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade700),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade700),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF80CBC4), width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: TextStyle(color: Colors.grey.shade400),
+    ),
+
+    // Elevated Button
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF80CBC4),
+        foregroundColor: Colors.black,
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        elevation: 2,
+      ),
+    ),
+
+    // Chips
+    chipTheme: ChipThemeData(
+      backgroundColor: const Color(0xFF2C2C2C),
+      selectedColor: const Color(0xFF80CBC4).withOpacity(0.2),
+      secondarySelectedColor: const Color(0xFF80CBC4),
+      labelStyle: const TextStyle(color: Colors.white),
+      secondaryLabelStyle: const TextStyle(
+          color: Color(0xFF80CBC4), fontWeight: FontWeight.bold),
+      checkmarkColor: const Color(0xFF80CBC4),
+    ),
+
+    // Bottom Navigation Bar
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF1E1E1E),
+      selectedItemColor: Color(0xFF80CBC4),
+      unselectedItemColor: Colors.grey,
+      type: BottomNavigationBarType.fixed,
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+    ),
+  );
 }

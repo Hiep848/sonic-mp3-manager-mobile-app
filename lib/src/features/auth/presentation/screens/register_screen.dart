@@ -8,6 +8,7 @@ import '../../../../core/utils/app_toast.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_login_buttons.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../controllers/auth_controller.dart';
 
 class RegisterScreen extends HookConsumerWidget {
@@ -25,6 +26,7 @@ class RegisterScreen extends HookConsumerWidget {
     useListenable(emailController);
     useListenable(passwordController);
     useListenable(confirmPasswordController);
+    final l10n = AppLocalizations.of(context)!;
 
     final authState = ref.watch(authControllerProvider);
     final formKey = useMemoized(() => GlobalKey<FormState>());
@@ -32,7 +34,7 @@ class RegisterScreen extends HookConsumerWidget {
     ref.listen(authControllerProvider, (previous, next) {
       // 1. Nếu đang Loading -> Hiện Dialog
       if (next is AsyncLoading) {
-        AppToast.showLoading(context, message: "Đang khởi tạo tài khoản...");
+        AppToast.showLoading(context, message: l10n.authCreatingAccount);
       }
       // 2. Nếu xong (Data hoặc Error) -> Tắt Dialog trước
       else {
@@ -45,14 +47,14 @@ class RegisterScreen extends HookConsumerWidget {
         if (next is AsyncError) {
           AppToast.showErrorDialog(
             context,
-            title: 'Lỗi đăng ký',
+            title: l10n.authRegisterError,
             message: '${next.error}',
           );
         } else if (next is AsyncData) {
           AppToast.showSuccessDialog(
             context,
             title: 'Thành công',
-            message: 'Tài khoản của bạn đã được tạo! Đăng nhập ngay.',
+            message: l10n.authRegisterSuccess,
           );
         }
       }
@@ -74,7 +76,7 @@ class RegisterScreen extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Create Account',
+                  l10n.authRegisterTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -83,23 +85,23 @@ class RegisterScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p32),
                 CustomTextField(
                   controller: nameController,
-                  label: 'Full Name',
+                  label: l10n.authFullName,
                   prefixIcon: Icons.person,
                   validator: (val) =>
-                      (val == null || val.isEmpty) ? 'Vui lòng nhập tên' : null,
+                      (val == null || val.isEmpty) ? l10n.authEnterName : null,
                 ),
                 const Gap(AppSizes.p16),
                 CustomTextField(
                   controller: emailController,
-                  label: 'Email',
+                  label: l10n.authEmail,
                   prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (val) {
                     if (val == null || val.isEmpty) {
-                      return 'Vui lòng nhập Email';
+                      return l10n.authEnterEmail;
                     }
                     if (!val.contains('@')) {
-                      return 'Email không hợp lệ';
+                      return l10n.authInvalidEmail;
                     }
                     return null;
                   },
@@ -107,15 +109,15 @@ class RegisterScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p16),
                 CustomTextField(
                   controller: passwordController,
-                  label: 'Password',
+                  label: l10n.authPassword,
                   prefixIcon: Icons.lock,
                   isPassword: true,
                   validator: (val) {
                     if (val == null || val.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
+                      return l10n.authEnterPassword;
                     }
                     if (val.length < 6) {
-                      return 'Mật khẩu quá ngắn';
+                      return l10n.authShortPassword;
                     }
                     return null;
                   },
@@ -123,22 +125,22 @@ class RegisterScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p16),
                 CustomTextField(
                   controller: confirmPasswordController,
-                  label: 'Confirm Password',
+                  label: l10n.authConfirmPassword,
                   prefixIcon: Icons.lock_outline,
                   isPassword: true,
                   validator: (val) {
                     if (val == null || val.isEmpty) {
-                      return 'Vui lòng xác nhận mật khẩu';
+                      return l10n.authConfirmPassEmpty;
                     }
                     if (val != passwordController.text) {
-                      return 'Mật khẩu không khớp';
+                      return l10n.authPassMismatch;
                     }
                     return null;
                   },
                 ),
                 const Gap(AppSizes.p24),
                 PrimaryButton(
-                  text: 'SIGN UP',
+                  text: l10n.authSignUpButton,
                   isLoading: authState.isLoading,
                   onPressed: isFormFilled
                       ? () {
@@ -157,7 +159,7 @@ class RegisterScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p16),
                 TextButton(
                   onPressed: () => context.go('/login'),
-                  child: const Text('Already have an account? Login'),
+                  child: Text(l10n.authHaveAccount),
                 ),
               ],
             ),

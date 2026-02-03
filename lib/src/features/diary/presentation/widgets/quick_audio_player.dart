@@ -1,11 +1,14 @@
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../audio/presentation/audio_player_controller.dart';
+import '../../domain/models/post_model.dart';
 
-class QuickAudioPlayer extends StatefulWidget {
+class QuickAudioPlayer extends ConsumerWidget {
   final String? audioUrl;
   final double duration;
   final bool isLight;
+  final AudioPost post; // Need post to identify track
 
   final double? progress;
   final String? statusText;
@@ -14,62 +17,43 @@ class QuickAudioPlayer extends StatefulWidget {
     super.key,
     required this.audioUrl,
     required this.duration,
+    required this.post,
     this.isLight = false,
     this.progress,
     this.statusText,
   });
 
   @override
-  State<QuickAudioPlayer> createState() => _QuickAudioPlayerState();
-}
-
-class _QuickAudioPlayerState extends State<QuickAudioPlayer> {
-  late AudioPlayer _player;
-  bool _isInit = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = AudioPlayer();
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  Future<void> _initAndPlay() async {
-    if (widget.audioUrl == null) return;
-    try {
-      await _player.setUrl(widget.audioUrl!);
-      _isInit = true;
-      _player.play();
-    } catch (e) {
-      debugPrint("Error loading audio: $e");
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorPrimary =
-        widget.isLight ? Colors.white : Theme.of(context).primaryColor;
-    final colorText = widget.isLight ? Colors.white70 : Colors.grey;
+        isLight ? Colors.white : Theme.of(context).primaryColor;
+    final colorText = isLight ? Colors.white70 : Colors.grey;
 
-    // [LOGIC MỚI] Kiểm tra xem có URL chưa
-    final bool isReady = widget.audioUrl != null;
+    final audioState = ref.watch(audioPlayerProvider);
+    final isCurrentTrack = audioState.currentTrack?.id == post.id;
+    final isPlaying = isCurrentTrack && audioState.isPlaying;
+    final isLoading = isCurrentTrack && audioState.isLoading;
+
+    // Duration/Position logic
+    final currentPosition =
+        isCurrentTrack ? audioState.position : Duration.zero;
+    // Fix: Use actual player duration if available, otherwise fallback to post duration
+    final totalDuration = (isCurrentTrack && audioState.duration.inSeconds > 0)
+        ? audioState.duration
+        : Duration(seconds: duration.toInt());
+
+    final bool isReady = audioUrl != null;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: widget.isLight ? Colors.black26 : Colors.grey.shade100,
+        color: isLight ? Colors.black26 : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          // 1. NÚT ĐIỀU KHIỂN (Play hoặc Loading Icon)
+          // 1. CONTROL BUTTON
           if (!isReady)
-            // Đang xử lý: Hiện icon loading hoặc sync
             SizedBox(
                 width: 32,
                 height: 32,
@@ -79,61 +63,34 @@ class _QuickAudioPlayerState extends State<QuickAudioPlayer> {
                         height: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: colorPrimary))))
+          else if (isLoading)
+            SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                  color: colorPrimary, strokeWidth: 2),
+            )
           else
-            // Đã sẵn sàng: Hiện nút Play/Pause
-            StreamBuilder<PlayerState>(
-              stream: _player.playerStateStream,
-              builder: (context, snapshot) {
-                final playerState = snapshot.data;
-                final processingState = playerState?.processingState;
-                final playing = playerState?.playing;
-
-                if (processingState == ProcessingState.loading ||
-                    processingState == ProcessingState.buffering) {
-                  return SizedBox(
-                    width: 32,
-                    height: 32,
-                    child: CircularProgressIndicator(
-                        color: colorPrimary, strokeWidth: 2),
-                  );
-                } else if (playing != true) {
-                  return IconButton(
-                    icon: Icon(Icons.play_arrow_rounded,
-                        size: 32, color: colorPrimary),
-                    onPressed: () {
-                      if (!_isInit)
-                        _initAndPlay();
-                      else
-                        _player.play();
-                    },
-                  );
-                } else if (processingState != ProcessingState.completed) {
-                  return IconButton(
-                    icon: Icon(Icons.pause_rounded,
-                        size: 32, color: colorPrimary),
-                    onPressed: _player.pause,
-                  );
-                } else {
-                  return IconButton(
-                    icon: Icon(Icons.replay_rounded,
-                        size: 32, color: colorPrimary),
-                    onPressed: () => _player.seek(Duration.zero),
-                  );
-                }
+            IconButton(
+              icon: Icon(
+                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                  size: 32,
+                  color: colorPrimary),
+              onPressed: () {
+                ref.read(audioPlayerProvider.notifier).playTrack(post);
               },
             ),
 
           const SizedBox(width: 12),
 
-          // 2. THANH TIẾN TRÌNH (Seek Bar hoặc Progress Bar)
+          // 2. PROGRESS BAR
           Expanded(
             child: !isReady
                 ? Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Text trạng thái
-                      Text(widget.statusText ?? "Đang xử lý...",
+                      Text(statusText ?? "Đang xử lý...",
                           style: TextStyle(
                               fontSize: 11,
                               color: colorText,
@@ -141,9 +98,8 @@ class _QuickAudioPlayerState extends State<QuickAudioPlayer> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                       const SizedBox(height: 6),
-                      // Thanh upload/process
                       LinearProgressIndicator(
-                        value: widget.progress, // Nếu null sẽ chạy qua chạy lại
+                        value: progress,
                         backgroundColor: colorText.withOpacity(0.1),
                         color: colorPrimary,
                         minHeight: 4,
@@ -151,37 +107,24 @@ class _QuickAudioPlayerState extends State<QuickAudioPlayer> {
                       ),
                     ],
                   )
-                : StreamBuilder<Duration?>(
-                    stream: _player.durationStream,
-                    builder: (context, snapshotDuration) {
-                      var totalDuration = snapshotDuration.data ??
-                          Duration(seconds: widget.duration.toInt());
-                      if (totalDuration.inSeconds == 0) {
-                        totalDuration = const Duration(seconds: 0);
+                : ProgressBar(
+                    progress: currentPosition,
+                    total: totalDuration,
+                    baseBarColor: colorText.withOpacity(0.3),
+                    progressBarColor: colorPrimary,
+                    thumbColor: colorPrimary,
+                    thumbRadius: 6,
+                    timeLabelLocation: TimeLabelLocation.sides,
+                    timeLabelTextStyle:
+                        TextStyle(color: colorText, fontSize: 12),
+                    onSeek: (duration) {
+                      if (isCurrentTrack) {
+                        ref.read(audioPlayerProvider.notifier).seek(duration);
+                      } else {
+                        // If seeking a track that isn't playing, maybe play it from there?
+                        // For now, simple play
+                        ref.read(audioPlayerProvider.notifier).playTrack(post);
                       }
-
-                      return StreamBuilder<Duration>(
-                        stream: _player.positionStream,
-                        builder: (context, snapshotPosition) {
-                          final position =
-                              snapshotPosition.data ?? Duration.zero;
-                          return ProgressBar(
-                            progress: position,
-                            total: totalDuration,
-                            baseBarColor: colorText.withOpacity(0.3),
-                            progressBarColor: colorPrimary,
-                            thumbColor: colorPrimary,
-                            thumbRadius: 6,
-                            timeLabelLocation: TimeLabelLocation.sides,
-                            timeLabelTextStyle:
-                                TextStyle(color: colorText, fontSize: 12),
-                            onSeek: (duration) {
-                              if (!_isInit) _initAndPlay();
-                              _player.seek(duration);
-                            },
-                          );
-                        },
-                      );
                     },
                   ),
           ),

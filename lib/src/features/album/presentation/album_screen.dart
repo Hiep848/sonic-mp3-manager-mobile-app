@@ -38,7 +38,7 @@ class AlbumScreen extends ConsumerWidget {
             if (albums.isEmpty) {
               return Center(
                 child: Text(
-                  'No albums found',
+                  l10n.albumNoData,
                   style: theme.textTheme.bodyLarge,
                 ),
               );
@@ -57,7 +57,7 @@ class AlbumScreen extends ConsumerWidget {
                 final album = albums[index];
                 return GestureDetector(
                   onTap: () {
-                    context.push('/album/${album.id}', extra: album.name);
+                    context.go('/albums/detail/${album.id}', extra: album.name);
                   },
                   child: Container(
                     padding: const EdgeInsets.all(16),
@@ -129,7 +129,7 @@ class AlbumScreen extends ConsumerWidget {
                   onPressed: () =>
                       ref.read(myAlbumsControllerProvider.notifier).refresh(),
                   icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
+                  label: Text(l10n.commonRetry),
                 ),
               ],
             ),

@@ -7,6 +7,9 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/upload/presentation/screens/upload_screen.dart';
 import '../../features/diary/presentation/detail_screen.dart';
 import '../../features/diary/presentation/search_screen.dart';
+import '../../features/diary/presentation/feed_screen.dart'; // import FeedScreen
+import '../../features/diary/presentation/profile_screen.dart'; // import ProfileScreen
+import '../../features/album/presentation/album_screen.dart'; // import AlbumScreen
 import '../../features/album/presentation/album_detail_screen.dart';
 import '../app_startup/app_startup_provider.dart';
 
@@ -21,24 +24,20 @@ GoRouter goRouter(GoRouterRef ref) {
 
   return GoRouter(
     navigatorKey: navigatorKey,
-    initialLocation: '/home', // Mặc định muốn vào Home
+    initialLocation: '/home',
     redirect: (context, state) {
-      // Logic chặn cửa:
-      // Nếu đang ở trang auth (login hoặc register)
       final isAuthRoute =
           state.uri.path == '/login' || state.uri.path == '/register';
 
       if (!isLoggedIn) {
-        // Chưa login -> Đá về trang login (nếu chưa ở đó)
         return isAuthRoute ? null : '/login';
       }
 
-      // Đã login -> Nếu đang ở trang auth thì đá về home
       if (isAuthRoute) {
         return '/home';
       }
 
-      return null; // Cho phép đi tiếp
+      return null;
     },
     routes: [
       GoRoute(
@@ -46,13 +45,64 @@ GoRouter goRouter(GoRouterRef ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
+      // StatefulShellRoute for persistent bottom navigation
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return HomeScreen(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Feed (Home)
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home',
+                builder: (context, state) => const FeedScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      return DetailScreen(postId: id);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 1: Albums
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/albums',
+                builder: (context, state) => const AlbumScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+                      final name = state.extra as String? ?? 'Album';
+                      return AlbumDetailScreen(albumId: id, albumName: name);
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 2: Profile
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
+      // Standalone routes (not in bottom nav)
       GoRoute(
         path: '/upload',
         builder: (context, state) => const UploadScreen(),
@@ -66,14 +116,6 @@ GoRouter goRouter(GoRouterRef ref) {
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return DetailScreen(postId: id);
-        },
-      ),
-      GoRoute(
-        path: '/album/:id',
-        builder: (context, state) {
-          final id = state.pathParameters['id']!;
-          final name = state.extra as String? ?? 'Album';
-          return AlbumDetailScreen(albumId: id, albumName: name);
         },
       ),
     ],

@@ -41,9 +41,9 @@ class FeedScreen extends ConsumerWidget {
               ref.read(feedControllerProvider.notifier).changeSort(value);
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'newest', child: Text('Mới nhất')),
-              const PopupMenuItem(
-                  value: 'popular', child: Text('Nghe nhiều nhất')),
+              PopupMenuItem(value: 'newest', child: Text(l10n.feedSortNewest)),
+              PopupMenuItem(
+                  value: 'popular', child: Text(l10n.feedSortPopular)),
             ],
           ),
         ],
@@ -71,13 +71,13 @@ class FeedScreen extends ConsumerWidget {
                     SizedBox(
                       height: MediaQuery.of(context).size.height *
                           0.7, // Chiều cao ảo để căn giữa
-                      child: const Center(
+                      child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.feed_outlined,
+                            const Icon(Icons.feed_outlined,
                                 size: 64, color: Colors.grey),
-                            Text("Chưa có bài đăng nào"),
+                            Text(l10n.feedNoPosts),
                           ],
                         ),
                       ),
@@ -92,7 +92,7 @@ class FeedScreen extends ConsumerWidget {
                     if (index == 0) {
                       final dummyPost = AudioPost(
                         id: "uploading_temp",
-                        title: "Đang tải lên...",
+                        title: l10n.feedUploading,
                         duration: 0,
                         fileSize: 0,
                         uploadDate: DateTime.now(),
@@ -134,7 +134,7 @@ class FeedScreen extends ConsumerWidget {
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, stack) => Center(
-              child: Text('Lỗi tải dữ liệu: $err'),
+              child: Text(l10n.commonError(err)),
             ),
           ),
         ),

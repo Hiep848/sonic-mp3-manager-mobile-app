@@ -43,11 +43,11 @@ class _CreateAlbumDialogState extends ConsumerState<CreateAlbumDialog> {
     // Let's assume keys: albumCreateTitle, albumInputName, cancel, create
 
     return AlertDialog(
-      title: const Text('New Album'), // TODO: use l10n
+      title: Text(l10n.albumCreateNew), // TODO: use l10n
       content: TextField(
         controller: _titleController,
-        decoration: const InputDecoration(
-          hintText: 'Enter album name',
+        decoration: InputDecoration(
+          hintText: l10n.albumNameHint,
         ),
         autofocus: true,
       ),
@@ -59,7 +59,7 @@ class _CreateAlbumDialogState extends ConsumerState<CreateAlbumDialog> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Create'),
+              : Text(l10n.albumCreateButton),
         ),
       ],
     );

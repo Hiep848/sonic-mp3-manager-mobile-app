@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/app_toast.dart';
 import '../../diary/data/repositories/post_repository.dart';
@@ -7,6 +8,7 @@ import '../../diary/domain/models/post_model.dart';
 import '../domain/models/playlist_models.dart';
 import 'controllers/album_actions_controller.dart';
 import 'controllers/album_detail_controller.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class AlbumDetailScreen extends ConsumerWidget {
   final String albumId;
@@ -21,6 +23,7 @@ class AlbumDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlistAsync = ref.watch(albumDetailControllerProvider(albumId));
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -33,14 +36,14 @@ class AlbumDetailScreen extends ConsumerWidget {
           PopupMenuButton<String>(
             onSelected: (value) => _handleAction(context, ref, value),
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'rename',
-                child: Text('Rename Album'),
+                child: Text(l10n.albumRename),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'delete',
-                child:
-                    Text('Delete Album', style: TextStyle(color: Colors.red)),
+                child: Text(l10n.albumDelete,
+                    style: const TextStyle(color: Colors.red)),
               ),
             ],
           ),
@@ -49,7 +52,7 @@ class AlbumDetailScreen extends ConsumerWidget {
       body: playlistAsync.when(
         data: (playlist) => _buildBody(context, ref, playlist),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) => Center(child: Text(l10n.commonError(err))),
       ),
     );
   }
@@ -72,14 +75,14 @@ class AlbumDetailScreen extends ConsumerWidget {
           final isLoading = state.isLoading;
 
           return AlertDialog(
-            title: const Text('Delete Album'),
-            content: const Text('Are you sure you want to delete this album?'),
+            title: Text(AppLocalizations.of(context)!.albumDeleteTitle),
+            content: Text(AppLocalizations.of(context)!.albumDeleteConfirm),
             actions: [
               TextButton(
                 onPressed: isLoading
                     ? null
                     : () => Navigator.pop(dialogContext, false),
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.commonCancel),
               ),
               TextButton(
                 onPressed: isLoading
@@ -139,7 +142,7 @@ class AlbumDetailScreen extends ConsumerWidget {
           final isLoading = state.isLoading;
 
           return AlertDialog(
-            title: const Text('Rename Album'),
+            title: Text(AppLocalizations.of(context)!.albumRenameTitle),
             content: TextField(
               controller: controller,
               enabled: !isLoading,
@@ -184,7 +187,7 @@ class AlbumDetailScreen extends ConsumerWidget {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Save'),
+                    : Text(AppLocalizations.of(context)!.commonSave),
               ),
             ],
           );
@@ -196,7 +199,7 @@ class AlbumDetailScreen extends ConsumerWidget {
   Widget _buildBody(
       BuildContext context, WidgetRef ref, AlbumPlaylist playlist) {
     if (playlist.tracks.isEmpty) {
-      return const Center(child: Text('No tracks in this album'));
+      return Center(child: Text(AppLocalizations.of(context)!.albumNoTracks));
     }
 
     return ListView.builder(
@@ -206,7 +209,12 @@ class AlbumDetailScreen extends ConsumerWidget {
         return ListTile(
           leading: const Icon(Icons.music_note),
           title: Text(track.title),
-          subtitle: Text(track.meta.artist ?? 'Unknown Artist'),
+          subtitle: Text(track.meta.artist ??
+              AppLocalizations.of(context)!.albumUnknownArtist),
+          onTap: () {
+            // Navigate to Detail Screen only, as requested
+            context.push('/detail/${track.meta.postId}');
+          },
           trailing: IconButton(
             icon: const Icon(Icons.remove_circle_outline),
             onPressed: () {
@@ -254,6 +262,7 @@ class _PostSelectionList extends ConsumerStatefulWidget {
 
 class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
   late Future<List<AudioPost>> _postsFuture;
+  final Set<String> _addingPostIds = {};
 
   @override
   void initState() {
@@ -263,14 +272,13 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the controller to keep it alive and get loading state
-    final actionState = ref.watch(albumActionsControllerProvider);
-    final isLoading = actionState.isLoading;
+    // Watch the controller to keep it alive
+    ref.watch(albumActionsControllerProvider);
 
     return Column(
       children: [
         AppBar(
-          title: const Text('Add MP3 to Album'),
+          title: Text(AppLocalizations.of(context)!.albumAddMp3Title),
           automaticallyImplyLeading: false,
           actions: [
             IconButton(
@@ -291,25 +299,29 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
               }
               final posts = snapshot.data ?? [];
               if (posts.isEmpty) {
-                return const Center(child: Text('No MP3s found'));
+                return Center(
+                    child: Text(AppLocalizations.of(context)!.albumNoMp3s));
               }
               return ListView.builder(
                 controller: widget.scrollController,
                 itemCount: posts.length,
                 itemBuilder: (context, index) {
                   final post = posts[index];
+                  final isItemLoading = _addingPostIds.contains(post.id);
+
                   return ListTile(
                     leading: const Icon(Icons.music_note),
                     title: Text(post.title),
-                    subtitle: Text(post.textContent ?? 'No description'),
+                    subtitle: Text(post.textContent ??
+                        AppLocalizations.of(context)!.albumNoDescription),
                     trailing: IconButton(
-                      icon: isLoading
+                      icon: isItemLoading
                           ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.add_circle_outline),
-                      onPressed: isLoading ? null : () => _addPost(post),
+                      onPressed: isItemLoading ? null : () => _addPost(post),
                     ),
                   );
                 },
@@ -322,6 +334,10 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
   }
 
   Future<void> _addPost(AudioPost post) async {
+    setState(() {
+      _addingPostIds.add(post.id);
+    });
+
     try {
       await ref.read(albumActionsControllerProvider.notifier).addPostToAlbum(
             albumId: widget.albumId,
@@ -333,6 +349,12 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
     } catch (e) {
       if (mounted) {
         AppToast.showError(context, 'Failed to add: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _addingPostIds.remove(post.id);
+        });
       }
     }
   }

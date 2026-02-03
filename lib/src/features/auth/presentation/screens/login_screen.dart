@@ -9,6 +9,7 @@ import '../../../../core/utils/app_toast.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/social_login_buttons.dart';
+import '../../../../../l10n/app_localizations.dart';
 import '../controllers/auth_controller.dart';
 
 // Dùng HookConsumerWidget để tận dụng useTextEditingController
@@ -26,6 +27,7 @@ class LoginScreen extends HookConsumerWidget {
 
     final authState = ref.watch(authControllerProvider);
     final formKey = useMemoized(() => GlobalKey<FormState>());
+    final l10n = AppLocalizations.of(context)!;
 
     // Logic kiểm tra nút Login có được bật hay không
     final isFormValid =
@@ -35,7 +37,7 @@ class LoginScreen extends HookConsumerWidget {
     ref.listen(authControllerProvider, (previous, next) {
       // 1. Nếu đang Loading -> Hiện Dialog
       if (next is AsyncLoading) {
-        AppToast.showLoading(context, message: "Đang đăng nhập...");
+        AppToast.showLoading(context, message: l10n.authLoggingIn);
       }
       // 2. Nếu xong (Data hoặc Error) -> Tắt Dialog trước
       else {
@@ -48,11 +50,11 @@ class LoginScreen extends HookConsumerWidget {
         if (next is AsyncError) {
           AppToast.showErrorDialog(
             context,
-            title: 'Lỗi đăng nhập',
+            title: l10n.authLoginTitle,
             message: '${next.error}',
           );
         } else if (next is AsyncData) {
-          AppToast.showSuccess(context, 'Chào mừng trở lại!');
+          AppToast.showSuccess(context, l10n.authLoginSuccess);
         }
       }
     });
@@ -67,7 +69,7 @@ class LoginScreen extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Welcome Back',
+                  l10n.authWelcome,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -76,15 +78,15 @@ class LoginScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p32),
                 CustomTextField(
                   controller: emailController,
-                  label: 'Email',
+                  label: l10n.authEmail,
                   prefixIcon: Icons.email,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập Email';
+                      return l10n.authEnterEmail;
                     }
                     if (!value.contains('@')) {
-                      return 'Email không hợp lệ';
+                      return l10n.authInvalidEmail;
                     }
                     return null;
                   },
@@ -92,22 +94,22 @@ class LoginScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p16),
                 CustomTextField(
                   controller: passwordController,
-                  label: 'Password',
+                  label: l10n.authPassword,
                   prefixIcon: Icons.lock,
                   isPassword: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
+                      return l10n.authEnterPassword;
                     }
                     if (value.length < 6) {
-                      return 'Mật khẩu phải trên 6 ký tự';
+                      return l10n.authShortPassword;
                     }
                     return null;
                   },
                 ),
                 const Gap(AppSizes.p24),
                 PrimaryButton(
-                  text: 'LOGIN',
+                  text: l10n.authLoginButton,
                   isLoading: authState.isLoading,
                   onPressed: isFormValid
                       ? () {
@@ -127,7 +129,7 @@ class LoginScreen extends HookConsumerWidget {
                 const Gap(AppSizes.p16),
                 TextButton(
                   onPressed: () => context.go('/register'),
-                  child: const Text("Don't have an account? Sign Up"),
+                  child: Text(l10n.authNoAccount),
                 ),
               ],
             ),

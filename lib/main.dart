@@ -6,6 +6,7 @@ import 'l10n/app_localizations.dart';
 import 'src/core/app_startup/app_startup_provider.dart';
 import 'src/core/routing/app_router.dart';
 import 'src/core/theme/app_theme.dart';
+import 'src/core/theme/theme_provider.dart';
 import 'src/core/utils/dio_provider.dart';
 import 'src/core/utils/locale_provider.dart';
 
@@ -23,6 +24,7 @@ class MyApp extends ConsumerWidget {
 
     final startupState = ref.watch(appStartupProvider);
     final locale = ref.watch(appLocaleProvider);
+    final themeMode = ref.watch(appThemeModeProvider);
 
     return startupState.when(
       data: (_) {
@@ -31,6 +33,8 @@ class MyApp extends ConsumerWidget {
           title: 'MP3 Management',
           routerConfig: router,
           theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
           locale: locale,
           localizationsDelegates: const [
             AppLocalizations.delegate,
