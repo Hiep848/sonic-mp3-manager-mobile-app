@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../upload/domain/models/upload_state.dart';
 import '../../domain/models/post_model.dart';
 import 'mood_chip.dart';
 import 'quick_audio_player.dart';
@@ -6,12 +8,40 @@ import 'quick_audio_player.dart';
 class AudioPostCard extends StatelessWidget {
   final AudioPost post;
   final VoidCallback? onTap;
+  final UploadState? uploadState;
+  final VoidCallback? onCancel;
 
   const AudioPostCard({
     super.key,
     required this.post,
     this.onTap,
+    this.uploadState,
+    this.onCancel,
   });
+
+  void _showCancelDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hủy đăng bài?'),
+        content:
+            const Text('Tiến trình tải lên sẽ bị hủy và không thể khôi phục.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Đóng'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              onCancel?.call();
+            },
+            child: const Text('Hủy bỏ', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +49,32 @@ class AudioPostCard extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
     final hasBackground = post.thumbnailUrl != null;
+    String? streamUrl = post.streamUrl;
+    bool isProcessing = false;
+    double currentProgress = 0.0;
+    String? statusText;
+
+    if (uploadState != null && uploadState!.stage != UploadStage.idle) {
+      streamUrl = null;
+      currentProgress = uploadState!.progress;
+      isProcessing = true;
+      switch (uploadState!.stage) {
+        case UploadStage.uploading:
+          statusText = "Đang tải lên...";
+          break;
+        case UploadStage.confirming:
+          statusText = "Đang đồng bộ...";
+          break;
+        case UploadStage.processing:
+          statusText = "AI đang xử lý...";
+          break;
+        case UploadStage.failed:
+          statusText = "Lỗi xử lý";
+          break;
+        default:
+          statusText = "Đang xử lý...";
+      }
+    }
 
     return GestureDetector(
       onTap: onTap,
@@ -65,6 +121,20 @@ class AudioPostCard extends StatelessWidget {
                       ),
                     ),
                     MoodChip(mood: post.mood),
+                    if (isProcessing) ...[
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          icon: const Icon(Icons.close, size: 20),
+                          color: hasBackground ? Colors.white70 : Colors.grey,
+                          tooltip: "Hủy tải lên",
+                          onPressed: () => _showCancelDialog(context),
+                        ),
+                      ),
+                    ]
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -98,12 +168,14 @@ class AudioPostCard extends StatelessWidget {
                 // Audio Player
                 QuickAudioPlayer(
                   duration: post.duration,
+                  audioUrl: streamUrl,
                   isLight: hasBackground,
+                  progress: isProcessing ? currentProgress : null,
+                  statusText: statusText,
                 ),
 
                 const SizedBox(height: 12),
 
-                // Footer: Hashtags & File Size
                 Row(
                   children: [
                     ...post.hashtags.take(2).map((tag) => Padding(
@@ -117,14 +189,31 @@ class AudioPostCard extends StatelessWidget {
                           ),
                         )),
                     const Spacer(),
-                    Text(
-                      '${(post.fileSize / 1024 / 1024).toStringAsFixed(1)} MB',
-                      style: textTheme.labelSmall?.copyWith(
-                        color: hasBackground
-                            ? Colors.white54
-                            : colorScheme.outline,
+                    if (isProcessing)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${(currentProgress * 100).toInt()}%', // Hiển thị % thực
+                          style: textTheme.labelSmall?.copyWith(
+                            color: colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
+                        '${(post.fileSize / 1024 / 1024).toStringAsFixed(1)} MB',
+                        style: textTheme.labelSmall?.copyWith(
+                          color: hasBackground
+                              ? Colors.white54
+                              : colorScheme.outline,
+                        ),
                       ),
-                    ),
                   ],
                 )
               ],
@@ -135,7 +224,8 @@ class AudioPostCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
     return '${date.day}/${date.month}/${date.year}';
   }
 }

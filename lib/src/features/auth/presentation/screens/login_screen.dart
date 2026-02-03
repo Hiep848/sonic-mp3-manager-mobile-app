@@ -17,8 +17,8 @@ class LoginScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final emailController = useTextEditingController(text: 'hiep@gmail.com');
-    final passwordController = useTextEditingController(text: '123456');
+    final emailController = useTextEditingController();
+    final passwordController = useTextEditingController();
 
     // [QUAN TRỌNG] Lắng nghe thay đổi text để rebuild UI (enable/disable nút)
     useListenable(emailController);
@@ -69,9 +69,9 @@ class LoginScreen extends HookConsumerWidget {
                 Text(
                   'Welcome Back',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                 ),
                 const Gap(AppSizes.p32),
                 CustomTextField(

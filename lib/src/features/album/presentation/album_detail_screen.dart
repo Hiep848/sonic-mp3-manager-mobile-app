@@ -263,6 +263,10 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the controller to keep it alive and get loading state
+    final actionState = ref.watch(albumActionsControllerProvider);
+    final isLoading = actionState.isLoading;
+
     return Column(
       children: [
         AppBar(
@@ -299,8 +303,13 @@ class _PostSelectionListState extends ConsumerState<_PostSelectionList> {
                     title: Text(post.title),
                     subtitle: Text(post.textContent ?? 'No description'),
                     trailing: IconButton(
-                      icon: const Icon(Icons.add_circle_outline),
-                      onPressed: () => _addPost(post),
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.add_circle_outline),
+                      onPressed: isLoading ? null : () => _addPost(post),
                     ),
                   );
                 },

@@ -10,7 +10,7 @@ class Album with _$Album {
     @JsonKey(name: 'title', readValue: _nameReader) required String name,
     String? description,
     @JsonKey(name: 'cover_url') String? coverUrl,
-    @JsonKey(name: 'post_ids', readValue: _postCountReader)
+    @JsonKey(name: 'postCount', readValue: _postCountReader)
     @Default(0)
     int postCount,
     @JsonKey(name: 'created_at') DateTime? createdAt,
@@ -20,9 +20,22 @@ class Album with _$Album {
 }
 
 Object? _postCountReader(Map map, String key) {
+  // Debug print to see what we actually get
+  // print('Album JSON Keys: ${map.keys}');
+
+  if (map.containsKey('postCount')) return map['postCount'];
   if (map.containsKey('post_ids')) {
     final list = map['post_ids'];
     if (list is List) return list.length;
+  }
+  if (map.containsKey('post_count')) return map['post_count'];
+  if (map.containsKey('count')) return map['count'];
+  if (map.containsKey('tracks') && map['tracks'] is List) {
+    return (map['tracks'] as List).length;
+  }
+  // Try 'posts' just in case
+  if (map.containsKey('posts') && map['posts'] is List) {
+    return (map['posts'] as List).length;
   }
   return 0;
 }

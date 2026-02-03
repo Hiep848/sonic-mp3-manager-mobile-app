@@ -1,6 +1,7 @@
-import '../domain/models/post_model.dart';
-import '../domain/models/mood.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../domain/models/mood.dart';
+import '../domain/models/post_model.dart';
 
 part 'mock_post_repository.g.dart';
 
@@ -9,10 +10,8 @@ class MockPostRepository {
     return AudioPost(
       id: 'post_$index',
       title: 'Journal Entry #$index',
-      mp3Path: 'assets/audio/mock_audio.mp3', // Placeholder
       duration: 120.0 + (index * 10),
       fileSize: 1024 * 1024 * (index + 1),
-      recordDate: DateTime.now().subtract(Duration(days: index)),
       uploadDate: DateTime.now().subtract(Duration(days: index, hours: 2)),
       mood: Mood.values[index % Mood.values.length],
       albumId: index % 3 == 0 ? 'album_1' : null,

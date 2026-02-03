@@ -16,6 +16,18 @@ class PostRepository {
   }) {
     return _dataSource.getFeed(limit: limit, skip: skip, sortBy: sortBy);
   }
+
+  Future<AudioPost> getPostById(String id) async {
+    return _dataSource.getPostById(id);
+  }
+
+  Future<void> updatePost(String id, AudioPost updatedPost) async {
+    return _dataSource.updatePost(id, updatedPost);
+  }
+
+  Future<String> downloadTranscript(String postId, String format) async {
+    return _dataSource.downloadTranscript(postId, format);
+  }
 }
 
 @riverpod
