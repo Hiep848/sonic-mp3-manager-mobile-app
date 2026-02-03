@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../domain/models/album_model.dart';
 import 'controllers/my_albums_controller.dart';
+import 'widgets/create_album_dialog.dart';
 
 class AlbumScreen extends ConsumerWidget {
   const AlbumScreen({super.key});
@@ -18,7 +19,15 @@ class AlbumScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l10n.albumTitle),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.add)),
+          IconButton(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const CreateAlbumDialog(),
+              );
+            },
+            icon: const Icon(Icons.add),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -48,71 +57,43 @@ class AlbumScreen extends ConsumerWidget {
                 final album = albums[index];
                 return GestureDetector(
                   onTap: () {
-                    // Navigate to album detail
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Opening ${album.name}...')),
-                    );
+                    context.push('/album/${album.id}', extra: album.name);
                   },
                   child: Container(
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.outlineVariant.withAlpha(80),
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withAlpha(
+                              10), // .withAlpha(10) roughly equals .withValues(alpha: 0.05) if 255 base. 0.05 * 255 = 12.
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16)),
-                              image: album.coverUrl != null &&
-                                      album.coverUrl!.isNotEmpty
-                                  ? DecorationImage(
-                                      image: NetworkImage(album.coverUrl!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
-                            child: (album.coverUrl == null ||
-                                    album.coverUrl!.isEmpty)
-                                ? Center(
-                                    child: Icon(Icons.album,
-                                        size: 40,
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant),
-                                  )
-                                : null,
-                          ),
+                        const Icon(Icons.folder, size: 48, color: Colors.amber),
+                        const SizedBox(height: 12),
+                        Text(
+                          album.name,
+                          maxLines: 2,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                album.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${album.postCount} ${l10n.albumAudios}',
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(color: Colors.grey),
-                              ),
-                            ],
-                          ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${album.postCount} ${l10n.albumAudios}',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -122,7 +103,37 @@ class AlbumScreen extends ConsumerWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text('Error: $err')),
+          error: (err, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline,
+                    size: 48, color: theme.colorScheme.error),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.commonError(err),
+                  style: theme.textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  err.toString(), // Detailed error for debugging
+                  style:
+                      theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () =>
+                      ref.read(myAlbumsControllerProvider.notifier).refresh(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

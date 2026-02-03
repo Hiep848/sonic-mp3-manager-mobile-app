@@ -60,6 +60,8 @@ class UploadController extends _$UploadController {
       state = state.copyWith(stage: UploadStage.processing, progress: 0.0);
       final sseStream = dataSource.listenToProcessingProgress(currentJobId);
       await for (final event in sseStream) {
+        if (_cancelToken?.isCancelled ?? false) break;
+
         final status = event['status'];
         dynamic progressRaw = event['progress'];
         double progressVal = 0.0;
@@ -75,21 +77,30 @@ class UploadController extends _$UploadController {
         } else if (status == 'FAILED' || status == 'CANCELLED') {
           throw Exception(event['message'] ?? 'Xử lý thất bại');
         } else {
-          state =
-              state.copyWith(stage: UploadStage.processing, progress: progress);
+          // Only update progress if not cancelled
+          if (!(_cancelToken?.isCancelled ?? false)) {
+            state = state.copyWith(
+                stage: UploadStage.processing, progress: progress);
+          }
         }
       }
 
       await Future.delayed(const Duration(seconds: 3));
-      state = const UploadState(stage: UploadStage.idle);
+      // Only set to idle if not cancelled (if cancelled, it's already idle or handled)
+      if (!(_cancelToken?.isCancelled ?? false)) {
+        state = const UploadState(stage: UploadStage.idle);
+      }
     } catch (e, st) {
       print("Upload failed: $e\n$st");
-      if (e is DioException && e.type == DioExceptionType.cancel) {
+      // Check if cancelled
+      if ((_cancelToken != null && _cancelToken!.isCancelled) ||
+          (e is DioException && e.type == DioExceptionType.cancel)) {
         state = const UploadState(stage: UploadStage.idle);
       } else {
         state = state.copyWith(
             stage: UploadStage.failed, errorMessage: e.toString());
         Future.delayed(const Duration(seconds: 5), () {
+          // Only reset if still failed (user didn't start new upload)
           if (state.stage == UploadStage.failed) {
             state = const UploadState(stage: UploadStage.idle);
           }

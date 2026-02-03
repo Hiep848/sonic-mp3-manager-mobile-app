@@ -26,16 +26,16 @@ class ApiEndpoints {
   static String uploadConfirm(String jobId) => '/upload/$jobId/confirm';
 
   // 6. Album Routes
-  static const String albums = '/albums';
+  static const String albums = '/albums/';
   static const String myAlbums = '/albums/my';
   static const String searchAlbums = '/albums/search';
 
-  static String albumDetail(String id) => '$albums/$id';
-  static String albumPosts(String id) => '$albums/$id/posts';
+  static String albumDetail(String id) => '$albums$id';
+  static String albumPosts(String id) => '$albums$id/posts';
   static String albumPost(String albumId, String postId) =>
       '$albums/$albumId/posts/$postId';
-  static String albumPlaylist(String id) => '$albums/$id/playlist';
-  static String albumShuffle(String id) => '$albums/$id/shuffle';
+  static String albumPlaylist(String id) => '$albums$id/playlist';
+  static String albumShuffle(String id) => '$albums$id/shuffle';
 
   // Helpers để nối chuỗi cho gọn
   static String postDetail(String id) => '$posts/$id';

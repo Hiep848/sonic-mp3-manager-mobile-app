@@ -9,8 +9,12 @@ class PostRepository {
   final PostRemoteDataSource _dataSource;
   PostRepository(this._dataSource);
 
-  Future<List<AudioPost>> getFeed({int skip = 0, String sortBy = 'newest'}) {
-    return _dataSource.getFeed(limit: 10, skip: skip, sortBy: sortBy);
+  Future<List<AudioPost>> getFeed({
+    int skip = 0,
+    String sortBy = 'newest',
+    int limit = 10,
+  }) {
+    return _dataSource.getFeed(limit: limit, skip: skip, sortBy: sortBy);
   }
 
   Future<AudioPost> getPostById(String id) async {
