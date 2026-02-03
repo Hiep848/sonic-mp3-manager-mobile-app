@@ -12,7 +12,7 @@ class ApiEndpoints {
   // static final String baseUrl =
   //     'http://${Platform.isAndroid ? '10.0.2.2' : 'localhost'}localhost:8000/api/v1';
 
-  static final String baseUrl = 'http://10.0.0.2:8000/api/v1';
+  static final String baseUrl = 'http://localhost:8000/api/v1';
   // 3. Auth Routes
   static const String login = '/auth/traditional-login';
   static const String register = '/auth/traditional-register';

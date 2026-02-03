@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/constants/api_endpoints.dart';
@@ -10,6 +13,7 @@ part 'post_remote_datasource.g.dart';
 
 class PostRemoteDataSource {
   final Dio _dio;
+
   PostRemoteDataSource(this._dio);
 
   Future<List<AudioPost>> getFeed({
@@ -19,7 +23,8 @@ class PostRemoteDataSource {
   }) async {
     try {
       final response = await _dio.get(
-        '${ApiEndpoints.baseUrl}/posts', // Đảm bảo endpoint đúng trong constants
+        '${ApiEndpoints.baseUrl}/posts',
+        // Đảm bảo endpoint đúng trong constants
         queryParameters: {
           'limit': limit,
           'skip': skip,
@@ -72,13 +77,35 @@ class PostRemoteDataSource {
   }
 
   Future<String> downloadTranscript(String postId, String format) async {
-    // Map 'word' to 'docx' for the API if needed, usually 'docx' is the standard extension/format key
     final requestFormat = format == 'word' ? 'docx' : format;
     final endpoint = '/media/$postId/export/$requestFormat';
-
-    final directory = await getApplicationDocumentsDirectory();
     final extension = requestFormat == 'docx' ? 'docx' : 'pdf';
-    final savePath = '${directory.path}/transcript_$postId.$extension';
+
+    String? savePath;
+    if (Platform.isAndroid) {
+      if (await Permission.manageExternalStorage.request().isGranted ||
+          await Permission.storage.request().isGranted) {
+        final downloadDir = Directory('/storage/emulated/0/Download');
+        savePath = '${downloadDir.path}/transcript_$postId.$extension';
+        if (!await downloadDir.exists()) {
+          await downloadDir.create(recursive: true);
+        }
+      } else {
+        throw Exception("Cần quyền truy cập storage");
+      }
+    } else {
+      final directory = await getApplicationDocumentsDirectory();
+      savePath = '${directory.path}/transcript_$postId.$extension';
+    }
+    int count = 1;
+    File file = File(savePath);
+    String originalPath = savePath.replaceAll(RegExp(r'\.(docx|pdf)$'), '');
+    while (await file.exists()) {
+      savePath = '$originalPath($count).$extension';
+      file = File(savePath);
+      count++;
+    }
+
     try {
       await _dio.download(
         endpoint,
@@ -90,7 +117,7 @@ class PostRemoteDataSource {
           }
         },
       );
-      return savePath;
+      return savePath!;
     } on DioException catch (e) {
       if (e.response != null && e.response!.data is ResponseBody) {
         try {
