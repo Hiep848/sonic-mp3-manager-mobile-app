@@ -72,20 +72,39 @@ class PostRemoteDataSource {
   }
 
   Future<String> downloadTranscript(String postId, String format) async {
-    final endpoint = '/media/$postId/export/$format';
+    // Map 'word' to 'docx' for the API if needed, usually 'docx' is the standard extension/format key
+    final requestFormat = format == 'word' ? 'docx' : format;
+    final endpoint = '/media/$postId/export/$requestFormat';
+
     final directory = await getApplicationDocumentsDirectory();
-    final extension = format == 'word' ? 'docx' : 'pdf';
+    final extension = requestFormat == 'docx' ? 'docx' : 'pdf';
     final savePath = '${directory.path}/transcript_$postId.$extension';
-    await _dio.download(
-      endpoint,
-      savePath,
-      onReceiveProgress: (received, total) {
-        if (total != -1) {
-          print('Downloading: ${(received / total * 100).toStringAsFixed(0)}%');
+    try {
+      await _dio.download(
+        endpoint,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            print(
+                'Downloading: ${(received / total * 100).toStringAsFixed(0)}%');
+          }
+        },
+      );
+      return savePath;
+    } on DioException catch (e) {
+      if (e.response != null && e.response!.data is ResponseBody) {
+        try {
+          final responseBody = e.response!.data as ResponseBody;
+          final errorBytes = await responseBody.stream.toList();
+          final errorList = errorBytes.expand((x) => x).toList();
+          final errorText = String.fromCharCodes(errorList);
+          print('Server Error Body: $errorText');
+        } catch (readError) {
+          print('Failed to read error body: $readError');
         }
-      },
-    );
-    return savePath;
+      }
+      rethrow;
+    }
   }
 }
 

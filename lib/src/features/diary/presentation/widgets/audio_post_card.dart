@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/app_toast.dart';
+import '../../data/repositories/post_repository.dart';
 import '../../../upload/domain/models/upload_state.dart';
 import '../../domain/models/post_model.dart';
 import 'mood_chip.dart';
 import 'quick_audio_player.dart';
 
-class AudioPostCard extends StatelessWidget {
+class AudioPostCard extends ConsumerWidget {
   final AudioPost post;
   final VoidCallback? onTap;
   final UploadState? uploadState;
@@ -43,8 +46,29 @@ class AudioPostCard extends StatelessWidget {
     );
   }
 
+  Future<void> _downloadTranscript(
+      BuildContext context, WidgetRef ref, String format) async {
+    try {
+      AppToast.showLoading(context, message: 'Downloading $format...');
+      final path = await ref
+          .read(postRepositoryProvider)
+          .downloadTranscript(post.id, format);
+
+      // Hide loading dialog
+      if (context.mounted) {
+        AppToast.hideLoading(context);
+        AppToast.showSuccess(context, 'Saved to $path');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        AppToast.hideLoading(context);
+        AppToast.showError(context, 'Failed to download: $e');
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textTheme = theme.textTheme;
@@ -108,7 +132,7 @@ class AudioPostCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Date & Mood
+                // Header: Date & Mood & Actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -120,21 +144,60 @@ class AudioPostCard extends StatelessWidget {
                             : colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    MoodChip(mood: post.mood),
-                    if (isProcessing) ...[
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          icon: const Icon(Icons.close, size: 20),
-                          color: hasBackground ? Colors.white70 : Colors.grey,
-                          tooltip: "Hủy tải lên",
-                          onPressed: () => _showCancelDialog(context),
-                        ),
-                      ),
-                    ]
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MoodChip(mood: post.mood),
+                        if (!isProcessing)
+                          PopupMenuButton<String>(
+                            icon: Icon(
+                              Icons.more_vert,
+                              color: hasBackground
+                                  ? Colors.white70
+                                  : colorScheme.onSurfaceVariant,
+                            ),
+                            onSelected: (value) =>
+                                _downloadTranscript(context, ref, value),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'word',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.description, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Download Word'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'pdf',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.picture_as_pdf, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Download PDF'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (isProcessing) ...[
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.close, size: 20),
+                              color:
+                                  hasBackground ? Colors.white70 : Colors.grey,
+                              tooltip: "Hủy tải lên",
+                              onPressed: () => _showCancelDialog(context),
+                            ),
+                          ),
+                        ]
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
